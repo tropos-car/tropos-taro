@@ -2,6 +2,7 @@
 // It is recommended to create a separate config.json including
 //  at least specific project meta information.
 {
+  "fname_raw": "{loggername}_{table}.dat",
   "output_l1a" : "mordor_{dt:%Y-%m-%d}_{campaign}_l1a.c{collection:02d}.{sfx}",
   // Meta information
   "campaign": "", // Campaign name
@@ -12,6 +13,12 @@
   "collection": 1, //Processing collection
   // to_l1a config
   "logger_name": "CR1000X", // Loggernet - Loggername
+  "logger_tables": [ // Loggernet tables to process
+    "Radiation",
+    "Meteorologie",
+    "SensorStatus",
+    "CR1000Status"
+  ],
   // Additional global attributes to store in the output Dataset
   // e.g., "comment", "acknowledgement"
   "global_attrs" : {}
