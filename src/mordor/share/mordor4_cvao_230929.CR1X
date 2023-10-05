@@ -1,0 +1,207 @@
+'CR1000X Series Datalogger
+'Date: 2023-05-05
+'Program author: Jonas Witthuhn
+
+' NTP time server
+''''''''10.117.3.80 -> TROPOS Timeserver
+''''''''10.117.1.11 -> GUVis Laptop
+Const timeserv  = "192.168.1.200"
+' STR22 Communications
+Const CR=CHR(13)' non printable character "carriage return"
+Const TrackerMR="MR"&CR ' request current tracking angle
+Const TrackerTM="TM"&CR ' request current time
+Const TrackerCR="CR"&CR ' request calculated tracking angle
+Const TrackerLO="LO"&CR ' request location info
+
+'Declare Constants
+'CONST PI = 3.141592654
+
+Dim Rs_Rf_ratio
+
+'Declare Public Variables and Units
+Public Timeoffset As Long ' NTP time offset
+Public PTemp : Units PTemp = degC
+Public Batt_volt : Units Batt_volt = V
+Public T_MS57 : Units T_MS57 = degC
+Public T_MS21 : Units T_MS21 = degC
+Public Response As String *50 ' STR-22 serial output
+Public STRtime(6) ' Store time requested from STR-22
+
+'Declare Public Variable Arrays
+Public TimeCR(9) ' stores logger real time clock value
+Public RadMes(4) ' stores MS-57,2xMS-80,MS-21 sample voltages
+Public WS300Data(19) ' stores buffer 0,1,2,3, and 4 of WS300-UMB
+Public MV01Pulse(3) ' Frequency of MV01 Ventilators
+
+'Declare Alias and Units
+Alias MV01Pulse(1) = MS80_global_pulse : Units MS80_global_pulse = Hz
+Alias MV01Pulse(2) = MS80_diffuse_pulse : Units MS80_diffuse_pulse = Hz
+Alias MV01Pulse(3) = MS21_pulse : Units MS21_pulse = Hz
+
+Alias RadMes(1) = MS57 : Units MS57 = mV
+Alias RadMes(2) = MS80_global : Units MS80_global = mV
+Alias RadMes(3) = MS80_diffuse : Units MS80_diffuse = mV
+Alias RadMes(4) = MS21 : Units MS21 = mV
+
+Alias WS300Data(1) = actAirT : Units actAirT = degC 
+Alias WS300Data(2) = actRelH : Units actRelH = %
+Alias WS300Data(3) = actDewP : Units actDewP = degC
+Alias WS300Data(4) = absAirP : Units absAirP = hPa
+Alias WS300Data(5) = relAirP : Units relAirP = hPa
+Alias WS300Data(6) = minAirT : Units minAirT = degC
+Alias WS300Data(7) = maxAirT : Units maxAirT = degC
+Alias WS300Data(8) = avgAirT : Units avgAirT = degC
+Alias WS300Data(9) = avgRelH : Units avgRelH = %
+Alias WS300Data(10) = minRelH : Units minRelH = %
+Alias WS300Data(11) = maxRelH : Units maxRelH = %
+Alias WS300Data(12) = minRelAirP : Units minRelAirP = hPa
+Alias WS300Data(13) = maxRelAirP : Units maxRelAirP = hPa
+Alias WS300Data(14) = avgRelAirP : Units avgRelAirP = hPa
+Alias WS300Data(15) = minAbsH : Units minAbsH = gm-3
+Alias WS300Data(16) = maxAbsH : Units maxAbsH = gm-3
+Alias WS300Data(17) = avgAbsH : Units avgAbsH = gm-3
+Alias WS300Data(18) = actWetBT : Units actWetBT = degC
+Alias WS300Data(19) = actSpecEnth : Units actSpecEnth = kJkg-1
+
+
+
+
+'Define Data Tables
+DataTable(CR1000Status,1,-1)
+  DataInterval(0,60,Min,1)
+  Sample(1,PTemp,FP2)
+  Sample(6,TimeCR(),FP2)
+  Average(1,T_MS57,FP2,0)
+  Average(1,T_MS21,FP2,0)
+EndTable
+
+DataTable(Radiation,1,-1)
+  DataInterval(0,0,mSec,1) 'same as Scan interval
+  'TableFile("CRD:Radiation.dat",64,-1,0,1,Day,0,0)'backup daylie files on SDCard
+  
+  ' Accuracy:
+  ' Samples are stored in units of mV as FP2 values meaning
+  '  Absolute Value (0,7.999) -> X.XXX
+  '  Absolute Value (8,79.99) -> XX.XX
+  ' ------------------------------------
+  '  X.XXX precisison:
+  '     Pyrheliometer MS-57 (C ~ 7uV/Wm-2): 0 - 1140Wm-2
+  '     Pyranometer MS-80 (C ~ 10uV/Wm-2): 0 - 800Wm-2
+  '     Pyrgeometer Ms-21 (C ~ 15uV/Wm-2): 0- 530Wm-2
+  ' else XX.XX precision
+
+  Sample(4,RadMes(),FP2)
+EndTable
+
+DataTable(Meteorologie,1,-1)
+  DataInterval(0,10,Min,1)
+  Average(19,WS300Data(),FP2,0)
+EndTable
+
+DataTable(SensorStatus,1,-1)
+  DataInterval(0,1,Min,1)
+  Average(1,T_MS57,FP2,0)
+  Average(1,T_MS21,FP2,0)
+  Average(3,MV01Pulse(),FP2,0)
+EndTable
+
+'Define Subroutines
+'Sub
+	'EnterSub instructions here
+'EndSub
+
+'Main Program
+BeginProg
+  ' Sync time at Program Start and then every 15min
+  ' see SlowSequence 2
+  Timeoffset = NetworkTimeProtocol(timeserv,0,50)
+'  SerialOpen(ComRS232,9600,0,0,50)
+'  RealTime(TimeCR())
+'	SerialFlush(ComRS232)
+'	SerialOut(ComRS232,TrackerTM,"",0,0)  ' TM: get time from tracker
+'	SerialIn(Response,ComRS232,20,"K",50)
+'	SplitStr(STRtime(),Response,",",6,5)
+'	If (STRtime(1)<2040) Then 'umgehe falsche zeit wenn keine gpsverbindung
+'	 Move(TimeCR(1),6,STRtime(1),6)  ' load TimeCR(1,2,3,4,5,6) with STRTime values
+'	 ClockSet(TimeCR())  ' sets the data logger clock
+'	EndIf
+  
+
+  '======== Scan Radiation Sensors =========
+	Scan(100,mSec,0,0)
+	  ' Radiation Sensors are measured using VoltDiff
+	  ' Sampling time: (2*Ref_Div)*(settling=0.5ms + ADCflush=0.45ms + 1000./FN1)
+	  ' Sampling time = 4.95ms  (FN1=250, Rev_Div=False)
+	  '==== Scan MS-57
+		VoltDiff(MS57,1,mV200,1,False,0,250,1,0)
+		'==== Scan MS-80 global
+		VoltDiff(MS80_global,1,mV200,4,False,0,250,1,0)
+		'==== Scan MS-80 diffuse
+		VoltDiff(MS80_diffuse,1,mV200,3,False,0,250,1,0)
+		'==== Scan MS-21 
+		VoltDiff(MS21,1,mV200,5,False,0,250,1,0)
+		' Total Scan time = 19.8ms
+		
+    'tacho
+     PulseCount (MV01Pulse(1),1,C1,1,1,1.0,0)
+     PulseCount (MV01Pulse(2),1,C2,1,1,1.0,0)
+     PulseCount (MV01Pulse(3),1,C3,1,1,1.0,0)
+		'Call Output Table
+		CallTable Radiation
+		CallTable SensorStatus
+	NextScan
+	
+  
+  '======= Scan Weather Station, Suntracker, Logger  ====
+  SlowSequence
+  Scan(10,Sec,1,0)
+    ' internal Parameter
+    PanelTemp (PTemp,15000)
+		Battery(Batt_volt)
+ 
+    'get WS300 measurements
+    SDI12Recorder(WS300Data(),C5,"0","C!",1,0)
+    
+    'Sensor temperatures
+    
+    'temperature pyrheliometer
+    BrHalf3W(Rs_Rf_ratio,1,mV200,3,Vx1,1,2100,1,0,_50Hz,100,0)
+    PRTCalc(T_MS57,1,Rs_Rf_ratio,4,1,0)
+    
+    'temperature ms21
+    BrHalf4W(Rs_Rf_ratio,1,mV200,mV200,6,Vx4,1,370,True ,True ,0,_50Hz,1,0)
+    PRTCalc(T_MS21,1,Rs_Rf_ratio,4,1,0)
+
+    CallTable Meteorologie
+    CallTable SensorStatus
+    CallTable CR1000Status
+  NextScan
+  
+  '========= Sync Time and STR infos ===============
+  SlowSequence
+  Scan(1,Min,1,0)
+     Timeoffset = NetworkTimeProtocol(timeserv,0,50)
+    
+    ' open communication to STR
+    'SerialOpen(ComC5,9600,0,0,50)
+    ' Time Sync from STR
+'    RealTime(TimeCR())
+'	  SerialFlush(ComRS232)
+'	  SerialOut(ComRS232,TrackerTM,"",0,0)  ' TM: get time from tracker
+'	  SerialIn(Response,ComRS232,20,"K",50)
+'	  SplitStr(STRtime(),Response,",",6,5)
+'	  If (STRtime(1)<2040) Then 'umgehe falsche zeit wenn keine gpsverbindung
+'		 Move(TimeCR(1),6,STRtime(1),6)  ' load TimeCR(1,2,3,4,5,6) with STRTime values
+'		 ClockSet(TimeCR())  ' sets the data logger clock
+'	  EndIf
+'	  
+    ' get location from STR
+	  'SerialFlush(ComC5)
+    'SerialOut(ComC5,TrackerLO,"",0,0) 'location information form str
+    'SerialIn(Response,ComC5,20,"K",50)
+    'SplitStr(LonLat(),Response,",",2,5)
+    ' close communication to STR
+    'SerialClose(ComC5)  
+  NextScan
+EndProg
+
