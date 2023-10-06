@@ -11,7 +11,7 @@ def read_json(fpath: str, *, object_hook: type = adict, cls = None) -> dict:
     """
     with open(fpath,"r") as f:
         js = json.load(f, object_hook=object_hook, cls=cls)
-        return js
+    return js
 
 def pick(whitelist: list[str], d: dict) -> dict:
     """ Keep only whitelisted keys from input dict.
@@ -85,5 +85,6 @@ def merge_config(config):
     default_config = get_default_config()
     if config is None:
         config = default_config
-    config = {**default_config, **config}
+    else:
+        config = {**default_config, **config}
     return config

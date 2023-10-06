@@ -2,8 +2,9 @@
 // It is recommended to create a separate config.json including
 //  at least specific project meta information.
 {
+  "path_sfx": "{dt:%Y/%m/}",
   "fname_raw": "{loggername}_{table}.dat",
-  "output_l1a" : "mordor_{dt:%Y-%m-%d}_{campaign}_l1a.c{collection:02d}.{sfx}",
+  "fname_out" : "mordor_{dt:%Y-%m-%d}_{campaign}_{table}_{datalvl}.c{collection:02d}.{sfx}",
   // Meta information
   "campaign": "", // Campaign name
   "project": "", // Project name
