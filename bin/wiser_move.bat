@@ -22,7 +22,7 @@ for /f "delims=" %%a in ('powershell Get-Date -Format "yyyyMMddHH"') do (
 )
 
 
-for %%F in (%sourceFolder%\*.WSD) do (
+for %%F in (%sourceFolder%\%currentDate:~0,4%\*.WSD) do (
     set "fileName=%%~nF"
     set "fileDate=!fileName:~0,8!"
     set "year=!fileDate:~0,4!"
@@ -38,7 +38,7 @@ for %%F in (%sourceFolder%\*.WSD) do (
     )
 )
 
-for %%F in (%sourceFolder%\*.CSV) do (
+for %%F in (%sourceFolder%\%currentDate:~0,4%\*.CSV) do (
     set "fileName=%%~nF"
     set "fileDate=!fileName:~0,10!"
     set "year=!fileDate:~0,4!"
