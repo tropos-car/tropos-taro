@@ -60,9 +60,12 @@ def raw2daily(inpath, outpath, tables=None, config=None):
             # create directory structure
             os.makedirs(os.path.dirname(outfname), exist_ok=True)
             # write daily file
-            with open(outfname,'w') as txt:
-                # write header
-                txt.writelines(datalines[:4])
+            if not os.path.exists(outfname):
+                with open(outfname, 'w') as txt:
+                    # write header
+                    txt.writelines(datalines[:4])
+            # append data lines
+            with open(outfname,'a') as txt:
                 # write content
                 islice = slice(idays[i],idays[i+1])
                 txt.writelines(datalines[islice])
