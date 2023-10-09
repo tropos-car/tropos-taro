@@ -13,6 +13,9 @@ setup(
     package_data={"mordor": ["share/*.json", "share/*.CR1X"]},
     include_package_data=True,
     entry_points={
+        "scripts": [
+            "bin/wiser_move.bat"
+        ],
         "console_scripts": [
             "mordor = mordor.click:cli",
         ],
