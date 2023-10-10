@@ -34,7 +34,7 @@ for %%F in (%sourceFolder%\%currentDate:~0,4%\*.WSD) do (
     set "year=!fileDate:~0,4!"
     set "month=!fileDate:~4,2!"
     set "day=!fileDate:~6,2!"
-    
+
     if "!fileDate!" neq "!currentDate:~0,8!" (
         set "destinationFolder=%destinationRoot%\!year!\!month!\!day!"
         if not exist "!destinationFolder!" (
@@ -51,14 +51,14 @@ for %%F in (%sourceFolder%\%currentDate:~0,4%\*.CSV) do (
     set "year=!fileDate:~0,4!"
     set "month=!fileDate:~4,2!"
     set "day=!fileDate:~6,2!"
-    set "hour"=!fileDate:~8,2!"
-    
+    set "hour=!fileDate:~8,2!"
+
     if "!fileDate!" neq "!currentDate!" (
         set "destinationFolder=%destinationRoot%\!year!\!month!\!day!"
         if not exist "!destinationFolder!" (
             mkdir "!destinationFolder!"
         )
         set "newFileName=wiser_!year!-!month!-!day!T!hour!_!locationName!.CSV"
-        move "%%F" "!destinationFolder!\!fileName!.CSV"
+        move "%%F" "!destinationFolder!\!newFileName!"
     )
 )
