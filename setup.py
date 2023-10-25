@@ -13,7 +13,8 @@ setup(
     package_data={"mordor": ["share/*.json", "share/*.CR1X"]},
     include_package_data=True,
     scripts= [
-            "bin/wiser_move.bat"
+            "bin/wiser_move.bat",
+            "bin/asi16_move.bat"
         ],
     entry_points={
         "console_scripts": [
