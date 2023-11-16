@@ -20,7 +20,7 @@ try:
     from tropos_uv import get_config
 except:
     print("import local get_config")
-    import get_config
+    from . import get_config
 
 
 
