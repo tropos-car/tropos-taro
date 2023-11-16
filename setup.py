@@ -31,6 +31,11 @@ setup(
         "toolz",
         "addict",
         "trosat-base @ git+https://github.com/hdeneke/trosat-base.git#egg=trosat-base",
+        "argparse",
+        "configparser",
+        "logging",
+        "pandas".
+        "psycopg2",
     ],
     extras_require={
         "docs": [

@@ -1,0 +1,56 @@
+{
+    "attributes": {
+        "conventions"    : "",
+        "title"          : "Cloud coverage",
+        "contact_person" : "???Name of person; mail to:email",
+        "description": "All Sky Imager AS16/51 and WeatherStation, metadata was taken from cloudiness_js_meta.json, data were extracted from FCT22 Database and transmitted to netcdf via cloud_coverage.py",
+        "instrument" : "All Sky Imager AS16/51 and WeatherStation",
+        "instrument_serial_number" : "16297",
+        "software_cloud_detection" : "FCT22_DB (FindClouds Trinity)"
+    },
+        
+    "dimensions": {
+        "time": -1
+    },  
+          
+    "variables": {
+        "time":{
+            "type": "f8",
+            "shape": ["time"],
+            "data":[],
+            "attributes": {
+                "units": "milliseconds since 2020-01-01 00:00:00",
+                "standard_name": "Time"
+            }
+         },  
+        "cloudiness": {
+            "type": "f4",
+            "shape": ["time"],
+            "data":[],
+            "attributes": {
+                "units": "1",
+                "long_name": "Cloud coverage"
+            }
+        },
+	   "temperature": {
+            "type": "f4",
+            "shape": ["time"],
+            "data":[],
+            "attributes": {
+                "units": "degree Celcius",
+                "long_name": "temperature"
+            }
+        },
+
+        "humidity":{
+            "type": "i2",
+            "shape": ["time"],
+            "data":[],
+            "attributes": {
+                "units": "percent",
+                "long_name": "humidity"
+            }
+        }
+    }
+}
+

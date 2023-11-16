@@ -1,0 +1,12 @@
+[DATABASE]
+
+DB_NAME = dbname
+DB_HOST = 127.0.0.1
+DB_PORT = 5432
+DB_USER = username
+DB_PASS = xxx
+
+[PATHFILE]
+
+PATHFILE_NETCDF = C:\Users\
+PATHFILE_SUBPATH_REGEX = date.strftime('%Y\%m\') + 'asi16' + date.strftime('%Y%m%d') + '.nc'
