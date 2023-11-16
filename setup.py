@@ -19,6 +19,7 @@ setup(
     entry_points={
         "console_scripts": [
             "mordor = mordor.click:cli",
+            "cloud_coverage = mordor:cloud_coverage",
         ],
     },
     install_requires=[
@@ -33,8 +34,7 @@ setup(
         "trosat-base @ git+https://github.com/hdeneke/trosat-base.git#egg=trosat-base",
         "argparse",
         "configparser",
-        "logging",
-        "pandas".
+        "pandas",
         "psycopg2",
     ],
     extras_require={

@@ -14,7 +14,7 @@ from trosat import cfconv as cf
 import pandas as pd
 import numpy as np
 from netCDF4 import date2num
-import psycopg2;
+import psycopg2
 
 try: 
     from tropos_uv import get_config
