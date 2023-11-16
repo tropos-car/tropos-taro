@@ -35,7 +35,7 @@ setup(
         "argparse",
         "configparser",
         "pandas",
-        "psycopg2",
+        "psycopg2-binary",
     ],
     extras_require={
         "docs": [
