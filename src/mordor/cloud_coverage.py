@@ -135,7 +135,8 @@ def execute(args, config, logger, step_startdate, step_stoppdate):
 """
 getting args, set logger, load configs
 """
-def adjust(argv):
+def adjust():
+    argv = sys.argv[1:]
     startdate=datetime.date.today()
 
     """Get name of directory where main script is located"""
@@ -230,5 +231,5 @@ def adjust(argv):
     loop(args, config, logger)
 
 if __name__ == "__main__":
-  adjust(sys.argv[1:])
+  adjust()
 
