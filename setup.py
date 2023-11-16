@@ -19,7 +19,7 @@ setup(
     entry_points={
         "console_scripts": [
             "mordor = mordor.click:cli",
-            "cloud_coverage = mordor:cloud_coverage",
+            "cloud_coverage = mordor.cloud_coverage:adjust",
         ],
     },
     install_requires=[
