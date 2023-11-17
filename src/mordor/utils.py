@@ -73,9 +73,19 @@ def get_default_config():
     """
     fn_config = os.path.join(
         importlib.resources.files("mordor"),
-        "share/mordor_config.json"
+        "conf/mordor_config.json"
     )
     default_config = read_json(fn_config)
+
+    # expand default file paths
+    for key in default_config:
+        if key.startswith("file"):
+            default_config.update({
+                key: os.path.join(
+                    importlib.resources.files("mordor"),
+                    default_config[key]
+                )
+            })
     return default_config
 
 def merge_config(config):
