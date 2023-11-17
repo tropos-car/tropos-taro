@@ -36,6 +36,8 @@ setup(
         "configparser",
         "pandas",
         "psycopg2-binary",
+        "parse",
+        "unitpy"
     ],
     extras_require={
         "docs": [
