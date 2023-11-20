@@ -1,0 +1,38 @@
+{ // Loggernet tables in Logger raw files
+  // column keywords for cfmeta config ["keyword","TroposID"]
+  // skip columns: null
+    "Radiation": [
+      ["time", ""],
+      ["record", ""],
+      ["dflx_sw_dir",""],
+      ["dflx_sw",""],
+      ["dflx_sw_dif",""],
+      ["dflx_lw",""]
+    ],
+    "Meteorologie": [
+      ["time", ""],
+      ["record", ""],
+      ["ta", ""],
+      ["rh", ""],
+      ["tdp", ""],
+      ["pa", ""],
+      null,null,null,null,null,null,null,null,null,null,null,null,null,
+      ["twb", ""],
+      ["se", ""]
+    ],
+    "SensorStatus": [
+      ["time", ""],
+      ["record", ""],
+      ["sensor_temperature", ""],
+      ["sensor_temperature", ""],
+      ["sensor_mv01_freq", ""],
+      ["sensor_mv01_freq", ""],
+      ["sensor_mv01_freq", ""]
+    ],
+    "CR1000Status": [
+      ["time", ""],
+      ["record", ""],
+      ["sensor_temperature", ""],
+      null,null,null,null,null,null, null,null
+    ]
+}

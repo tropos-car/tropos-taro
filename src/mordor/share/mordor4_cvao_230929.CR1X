@@ -57,11 +57,11 @@ Alias WS300Data(11) = maxRelH : Units maxRelH = %
 Alias WS300Data(12) = minRelAirP : Units minRelAirP = hPa
 Alias WS300Data(13) = maxRelAirP : Units maxRelAirP = hPa
 Alias WS300Data(14) = avgRelAirP : Units avgRelAirP = hPa
-Alias WS300Data(15) = minAbsH : Units minAbsH = gm-3
-Alias WS300Data(16) = maxAbsH : Units maxAbsH = gm-3
-Alias WS300Data(17) = avgAbsH : Units avgAbsH = gm-3
+Alias WS300Data(15) = minAbsH : Units minAbsH = g m-3
+Alias WS300Data(16) = maxAbsH : Units maxAbsH = g m-3
+Alias WS300Data(17) = avgAbsH : Units avgAbsH = g m-3
 Alias WS300Data(18) = actWetBT : Units actWetBT = degC
-Alias WS300Data(19) = actSpecEnth : Units actSpecEnth = kJkg-1
+Alias WS300Data(19) = actSpecEnth : Units actSpecEnth = kJ kg-1
 
 
 
