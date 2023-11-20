@@ -5,6 +5,11 @@
   "path_sfx": "{dt:%Y/%m/}",
   "fname_raw": "{loggername}_{table}.dat",
   "fname_out" : "mordor_{dt:%Y-%m-%d}_{campaign}_{table}_{datalvl}.c{collection:02d}.{sfx}",
+  // Config Files
+  "file_cfmeta": "share/mordor_cfmeta.json",
+  "file_calibration": "share/mordor_calibration.json",
+  "file_logger_tables": "share/mordor_logger_tables.json",
+  "file_instrument_map": "share/mordor_instrument_map.json",
   // Meta information
   "campaign": "", // Campaign name
   "project": "", // Project name
@@ -14,12 +19,6 @@
   "collection": 1, //Processing collection
   // to_l1a config
   "logger_name": "CR1000X", // Loggernet - Loggername
-  "logger_tables": [ // Loggernet tables to process
-    "Radiation",
-    "Meteorologie",
-    "SensorStatus",
-    "CR1000Status"
-  ],
   // Additional global attributes to store in the output Dataset
   // e.g., "comment", "acknowledgement"
   "global_attrs" : {}
