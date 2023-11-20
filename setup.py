@@ -10,7 +10,11 @@ setup(
     license="OSI Approved :: GNU General Public License v3 (GPLv3)",
     packages=["mordor"],
     package_dir={"": "src"},
-    package_data={"mordor": ["share/*.json", "share/*.CR1X"]},
+    package_data={"mordor": ["share/*.json",
+                             "share/*.CR1X",
+                             "conf/*.json",
+                             "conf/*.template"
+                             ]},
     include_package_data=True,
     scripts= [
             "bin/wiser_move.bat",
