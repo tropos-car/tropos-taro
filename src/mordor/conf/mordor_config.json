@@ -6,6 +6,7 @@
   "fname_raw": "{loggername}_{table}.dat",
   "fname_out" : "mordor_{dt:%Y-%m-%d}_{campaign}_{table}_{datalvl}.c{collection:02d}.{sfx}",
   // Config Files
+  "file_log": "mordor.log",
   "file_cfmeta": "share/mordor_cfmeta.json",
   "file_calibration": "share/mordor_calibration.json",
   "file_logger_tables": "share/mordor_logger_tables.json",

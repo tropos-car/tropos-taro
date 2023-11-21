@@ -1,10 +1,12 @@
 import os
+import logging
 import importlib.resources
 from toolz import keyfilter
 import jstyleson as json
 from addict import Dict as adict
 from operator import itemgetter
 
+logger = logging.getLogger(__name__)
 
 def read_json(fpath: str, *, object_hook: type = adict, cls = None) -> dict:
     """ Parse json file to python dict.
@@ -98,3 +100,19 @@ def merge_config(config):
     else:
         config = {**default_config, **config}
     return config
+
+
+def init_logger(config):
+    """
+    Initialize Logging based on MORDOR config
+    """
+    config = merge_config(config)
+    fname = os.path.abspath(config["file_log"])
+
+    # logging setup
+    logging.basicConfig(
+        filename=fname,
+        encoding='utf-8',
+        level=logging.DEBUG,
+        format='%(asctime)s %(name)s %(levelname)s:%(message)s'
+    )

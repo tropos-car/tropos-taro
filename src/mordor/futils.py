@@ -8,14 +8,6 @@ from toolz import assoc_in
 
 import mordor.utils
 
-
-# logging setup
-logging.basicConfig(
-    filename='mordor.log',
-    encoding='utf-8',
-    level=logging.DEBUG,
-    format='%(asctime)s %(name)s %(levelname)s:%(message)s'
-)
 logger = logging.getLogger(__name__)
 
 def raw2daily(inpath, outpath, tables=None, config=None):
@@ -49,8 +41,8 @@ def raw2daily(inpath, outpath, tables=None, config=None):
 
         N = len(datalines)
 
-        logging.debug(f"Start write {N-4} data lines from {infname}:")
-        logging.debug(f"Period {datalines[4].split(',')[0]} to {datalines[-1].split(',')[0]} ")
+        logger.info(f"Start write {N-4} data lines from {infname}:")
+        logger.debug(f"Period {datalines[4].split(',')[0]} to {datalines[-1].split(',')[0]} ")
 
         # split into daily files
         for i,uday in enumerate(udays):
@@ -72,7 +64,7 @@ def raw2daily(inpath, outpath, tables=None, config=None):
                 # write content
                 islice = slice(idays[i],idays[i+1])
                 txt.writelines(datalines[islice])
-            logging.debug(f".. Written {len(datalines[islice])} data lines to {outfname}.")
+            logger.debug(f".. Written {len(datalines[islice])} data lines to {outfname}.")
 
         # remove lines from original file after writing
         with open(infname,'r') as txt:
@@ -86,7 +78,7 @@ def raw2daily(inpath, outpath, tables=None, config=None):
         txt = open(infname, 'w')
         txt.writelines(datalines_new)
         txt.close()
-        logging.debug(f"Removed {N - 4} data lines from {infname}.")
+        logger.debug(f"Removed {N - 4} data lines from {infname}.")
 
 def update_coverage_meta(ds, timevar='time'):
     """Update global attributes related to geospatial and time coverage
@@ -136,9 +128,9 @@ def merge_ds(ds1, ds2, timevar="time"):
     """Merge two datasets along the time dimension.
     """
     if ds1[timevar].equals(ds2[timevar]):
-        logging.info("Overwrite existing file.")
+        logger.info("Overwrite existing file.")
         return ds2
-    logging.info("Merge with existing file.")
+    logger.info("Merge with existing file.")
 
     ## overwrite non time dependent variables
     overwrite_vars = [ v for v in ds1 if timevar not in ds1[v].dims ]

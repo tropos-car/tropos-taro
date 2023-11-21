@@ -3,17 +3,10 @@ import os.path
 import click
 import logging
 
+import mordor.utils
 from . import utils as mordorutils
 from . import futils as mordorfutils
 
-
-# logging setup
-logging.basicConfig(
-    filename='mordor.log',
-    encoding='utf-8',
-    level=logging.DEBUG,
-    format='%(asctime)s %(name)s %(levelname)s:%(message)s'
-)
 logger = logging.getLogger(__name__)
 
 @click.group("mordor")
@@ -27,6 +20,7 @@ def cli():
 @click.option("--config","-c",
               nargs=1,
               help="Specify config file - will merge and override the default config.")
+
 def raw2daily(input_path: str,
               output_path: str,
               config: str):
@@ -35,7 +29,11 @@ def raw2daily(input_path: str,
     The output path is suffixed according to config['path_sfx'] (default is '{dt:%Y/%m/}').
     The daily output files are named according to config['fname_out'] (default is 'mordor_{dt:%Y-%m-%d}_{campaign}_{table}_{datalvl}.c{collection:02d}.{sfx}').
     """
-    config =  mordorutils.read_json(os.path.abspath(config))
+    config = mordorutils.read_json(os.path.abspath(config))
+
+    mordor.utils.init_logger(config)
+
+    logger.info("Call mordor.futils.raw2daily")
     mordorfutils.raw2daily(
        inpath=os.path.abspath(input_path),
        outpath=os.path.abspath(output_path),
