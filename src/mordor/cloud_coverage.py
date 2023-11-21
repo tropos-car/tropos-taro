@@ -6,6 +6,7 @@
 
 import os
 import sys
+import importlib.resources
 import argparse
 import configparser
 import datetime
@@ -140,14 +141,19 @@ def adjust():
     startdate=datetime.date.today()
 
     """Get name of directory where main script is located"""
-    current_dirname = os.path.dirname(os.path.realpath(__file__))
-    
+    current_dirname = importlib.resources.files("mordor")
+    if not current_dirname :
+        current_dirname = os.path.dirname(os.path.realpath(__file__))
+        print("Current_dir cannot be taken from importlib.resources")
+
     """Get the name of the directory from where the script was executed"""
     exec_dirname = os.getcwd()
     
     """Define log_path_file + create dir"""
-    log_path_file = exec_dirname + "\cloud_coverage.log"
-    json_file  = os.path.dirname(os.path.realpath(__file__))  + '\conf\cloudiness_js_meta.json.template'
+    log_path_file       = os.path.join(current_dirname, 'cloud_coverage.log')
+    json_file           = os.path.join(current_dirname, 'conf\cloudiness_js_meta.json.template')
+    default_config_file = os.path.join(current_dirname, 'conf\config.ini.template')
+
 
     """for calling the function from the terminal"""
     parser = argparse.ArgumentParser(description='Access DB, extract cloud coverage data, write to daily netcdf file(s).') 
@@ -171,7 +177,10 @@ def adjust():
     if not os.path.isdir(  os.path.dirname( log_path_file ) ):
         os.makedirs( os.path.dirname( log_path_file ) )
         print('Create directory     : ' + os.path.dirname(log_path_file) )
-    
+    if not os.path.isfile( log_path_file ):
+        print('log_path_file not exists but created: ' + log_path_file )
+
+
     """Create logger with 'Cloudiness"""
     logger = logging.getLogger('cloudiness')
     logger.setLevel(logging.DEBUG)
@@ -210,14 +219,13 @@ def adjust():
         args.stoppdate = args.startdate
 
     """Check if configs exists"""
-    default_config_file = os.path.dirname(os.path.realpath(__file__))  + '\conf\\config.ini.template'
     your_config_file    = args.your_config_file
 
     if not os.path.isfile( default_config_file ):
-        logger.warning('default config file not exists: ' + default_config_file)
+        logger.error('default config file not exists: ' + default_config_file)
         quit()
     if not os.path.isfile( your_config_file ):
-        logger.warning('local config file not exists: ' + your_config_file)
+        logger.error('local config file not exists: ' + your_config_file)
         quit()
 
     """Get summarised config"""
