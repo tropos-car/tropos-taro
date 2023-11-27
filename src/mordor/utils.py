@@ -218,11 +218,11 @@ def meta_lookup(config, *, serial=None, troposID=None, date=None):
     calibration = parse_calibration(config["file_calibration"],
                                     troposID=troposID,
                                     cdate=date)
-
-    outdict.update({
-        "calibration_factor": calibration.calibration_factor.values.tolist(),
-        "calibration_error": calibration.calibration_error.values.tolist(),
-        "calibration_date": [f"{date:%Y-%m-%d}" for date in pd.to_datetime(calibration.time.values)]
-    })
+    if calibration is not None:
+        outdict.update({
+            "calibration_factor": calibration.calibration_factor.values.tolist(),
+            "calibration_error": calibration.calibration_error.values.tolist(),
+            "calibration_date": [f"{date:%Y-%m-%d}" for date in pd.to_datetime(calibration.time.values)]
+        })
 
     return outdict

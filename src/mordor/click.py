@@ -128,7 +128,6 @@ def info(ids:str, calibration:bool, serial:bool, tropos:bool, device:bool, confi
     """Print MORDOR device information. If no option is selected, full information is printed.
     """
     config = _configure(config)
-
     if len(ids) == 0:
         cdate = dt.datetime.now()
         mapping = mordor.utils.read_json(config["file_instrument_map"])
@@ -182,7 +181,10 @@ def info(ids:str, calibration:bool, serial:bool, tropos:bool, device:bool, confi
     if not (serial or tropos or device or calibration):
         serial, tropos, device, calibration = True, True, True, True
 
-    for id in ids:
+    for i, id in enumerate(ids):
+        if i != 0:
+            click.echo("")
+
         if id.startswith('A2'):
             meta = mordor.utils.meta_lookup(config, troposID=id)
         else:
@@ -194,11 +196,11 @@ def info(ids:str, calibration:bool, serial:bool, tropos:bool, device:bool, confi
             click.echo(f"Serial No: {meta['serial']}")
         if device:
             click.echo(f"Device:    {meta['station']} - {meta['device']}")
-        if calibration:
+        if calibration and meta['calibration_date'] is not None:
             click.echo("Calibrations:")
             for d, f, e in zip(meta['calibration_date'],
                                meta['calibration_factor'],
                                meta['calibration_error']):
                 click.echo(f"    {d}: {f:6.3f} (uV/(W m-2)) +- {e:4.2f} (%)")
             nextd = pd.to_datetime(meta['calibration_date'][-1]) + dt.timedelta(days=366*2)
-            click.echo(f"Next calibration due: {nextd:%Y-%m}!")
+            click.echo(f"Calibration due: {nextd:%Y-%m}!")
