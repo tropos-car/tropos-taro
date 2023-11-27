@@ -88,17 +88,22 @@ def update_coverage_meta(ds, timevar='time'):
     now = pd.to_datetime(np.datetime64("now"))
     gattrs = {
         'date_created': now.isoformat(),
-        'geospatial_lat_min': np.nanmin(ds.lat.values),
-        'geospatial_lat_max': np.nanmax(ds.lat.values),
-        'geospatial_lat_units': 'degN',
-        'geospatial_lon_min': np.nanmin(ds.lon.values),
-        'geospatial_lon_max': np.nanmax(ds.lon.values),
-        'geospatial_lon_units': 'degE',
         'time_coverage_start': pd.to_datetime(ds[timevar].values[0]).isoformat(),
         'time_coverage_end': pd.to_datetime(ds[timevar].values[-1]).isoformat(),
         'time_coverage_duration': pd.to_timedelta(duration).isoformat(),
         'time_coverage_resolution': pd.to_timedelta(resolution).isoformat(),
     }
+
+    if ("lat" in ds) and ("lon" in ds):
+        gattrs.update({
+            'geospatial_lat_min': np.nanmin(ds.lat.values),
+            'geospatial_lat_max': np.nanmax(ds.lat.values),
+            'geospatial_lat_units': 'degN',
+            'geospatial_lon_min': np.nanmin(ds.lon.values),
+            'geospatial_lon_max': np.nanmax(ds.lon.values),
+            'geospatial_lon_units': 'degE',
+        })
+
     ds.attrs.update(gattrs)
     return ds
 
@@ -151,6 +156,9 @@ def merge_ds(ds1, ds2, timevar="time"):
 def to_netcdf(ds, fname, timevar="time"):
     """xarray to netcdf, but merge if exist
     """
+    # create directory if not exists
+    os.makedirs(os.path.dirname(fname), exist_ok=True)
+
     # merge if necessary
     if os.path.exists(fname):
         ds1 = xr.open_dataset(fname)
@@ -227,27 +235,23 @@ def add_encoding(ds, vencode=None):
     for k, v in vencode.items():
         if k not in ds.keys():
             continue
-        ds[k].encoding = v
+        for ki in [key for key in ds if key.startswith(k)]:
+            ds[ki].encoding = v
         if "valid_range" not in vencode[k]:
             continue
         # add valid_range to variable attributes
-        ds[k].attrs.update({
-            'valid_range': vencode[k]['valid_range']
-        })
-
-    # special treatment of time and flux variables
-    if ds.processing_level=='l1a':
-        # special treatment for flux variables
-        for k in [var for var in ds.variables if var[:4] == 'dflx']:
-            ds[k].encoding.update(vencode['sensor_voltage_mV200'])
-            ds[k].attrs.update({
-                'units': vattrs_default['sensor_voltage_mV200']['units'],
-                'valid_range': vencode['sensor_voltage_mV200']['valid_range']
+        for ki in [key for key in ds if key.startswith(k)]:
+            ds[ki].attrs.update({
+                'valid_range': vencode[k]['valid_range']
             })
-    elif ds.processing_level == 'l1b':
+    if ds.processing_level == 'l1a':
+        pass
+    elif ds.processing_level in ['l1b']:
         ds = stretch_resolution(ds)
+    elif "processing_level" not in ds:
+        raise ValueError("Dataset has no 'processing_level' attribute")
     else:
-        raise ValueError("Dataset has no 'processing_level' attribute.")
+        logger.warning("Processing level not implemented in futils.add_encoding!")
 
     # add time encoding
     ds["time"].encoding.update({
