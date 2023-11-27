@@ -300,6 +300,14 @@
         "_FillValue": 4294967295,
         "zlib": true
       }
+    },
+    "altitude": {
+      "type": "i2",
+      "attributes": {
+        "standard_name": "altitude",
+        "units": "m",
+        "zlib": true
+      }
     }
   }
 }

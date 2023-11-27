@@ -18,6 +18,7 @@
   "contributor_name": "", // Names of any contributing individual
   "contributor_role": "", // Role of any of the contributing individuals
   "collection": 1, //Processing collection
+  "coordinates": null, // null or [latitude (degN), longitude (degE), altitude (m)]
   // to_l1a config
   "logger_name": "CR1000X", // Loggernet - Loggername
   // Additional global attributes to store in the output Dataset

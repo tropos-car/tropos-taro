@@ -41,7 +41,8 @@ setup(
         "pandas",
         "psycopg2-binary",
         "parse",
-        "unitpy"
+        "unitpy",
+        "scipy"
     ],
     extras_require={
         "docs": [

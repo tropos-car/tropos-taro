@@ -1,0 +1,234 @@
+// Mapping TroposID to Instrument Serial and description
+{
+  // Spare
+  "A201700047": {
+    "serial": "170736",
+    "device": "Pyranometer CMP21 10k thermistor, Kipp & Zonen",
+    "station": "spare"
+  },
+  "A201700048": {
+    "serial": "170737",
+    "device": "Pyranometer CMP21 10k thermistor, Kipp & Zonen",
+    "station": "spare"
+  },
+  "A202200071": {
+    "serial": "16299",
+    "device": "All sky imager ASI-16, Eko Instruments",
+    "station": "spare"
+  },
+  // MORDOR 1
+  "A201200136": {
+    "serial": "S11122.07",
+    "device": "Suntracker STR-22G, Eko Instruments",
+    "station": "MORDOR 1"
+  },
+  "A201200137": {
+    "serial": "P12029",
+    "device": "Pyrheliometer MS-56, Eko Instruments",
+    "station": "MORDOR 1"
+  },
+  "A201200138": {
+    "serial": "E10743",
+    "device": "Logger CR1000, Campbell Sci.",
+    "station": "MORDOR 1"
+  },
+  "A201200139": {
+    "serial": "122863",
+    "device": "Pyranometer CMP21, Kipp & Zonen",
+    "station": "MORDOR 1"
+  },
+  "A201200140": {
+    "serial": "122864",
+    "device": "Pyranometer CMP21, Kipp & Zonen",
+    "station": "MORDOR 1"
+  },
+  "A201200141": {
+    "serial": "120520",
+    "device": "Pyrgeometer CGR4 10k thermistor, Kipp & Zonen",
+    "station": "MORDOR 1"
+  },
+  "A201200144": {
+    "serial": "143.1012.0812.033",
+    "device": "Weather station WS-300, Lufft",
+    "station": "MORDOR 1"
+  },
+  "A201300014": {
+    "serial": "FE8172V",
+    "device": "All-Sky-Camera Vivotek",
+    "station": "MORDOR 1"
+  },
+  "A201700049": {
+    "serial": "170738",
+    "device": "Pyranometer CMP21 10k thermistor, Kipp & Zonen",
+    "station": "MORDOR 1"
+  },
+  "A201700050": {
+    "serial": "160182",
+    "device": "Pyrgeometer CGR4 10k thermistor, Kipp & Zonen",
+    "station": "MORDOR 1"
+  },
+  "10004.23": {
+    "serial": "10004.23",
+    "device": "Pyranometer ML-020-VM, Eko Instruments",
+    "station": "MORDOR 1"
+  },
+  "11107.038": {
+    "serial": "11107.038",
+    "device": "Pyranometer ML-020-VM, Eko Instruments",
+    "station": "MORDOR 1"
+  },
+  // MORDOR 2 (Lacros)
+  "S17139313": {
+    "serial": "S17139313",
+    "device": "Pyranometer ML-01, Eko Instruments",
+    "station": "MORDOR 2 (LACROS)"
+  },
+  "A201700002": {
+    "serial": "3843",
+    "device": "Logger CR1000, Campbell Sci.",
+    "station": "MORDOR 2 (LACROS)"
+  },
+  "A201700041": {
+    "serial": "S15102.07",
+    "device": "Suntracker STR-21G, Eko Instruments",
+    "station": "MORDOR 2 (LACROS)"
+  },
+  "A201700042": {
+    "serial": "S16032523",
+    "device": "Pyranometer MS-80, Eko Instruments",
+    "station": "MORDOR 2 (LACROS)"
+  },
+  "A201700043": {
+    "serial": "S16032524",
+    "device": "Pyranometer MS-80, Eko Instruments",
+    "station": "MORDOR 2 (LACROS)"
+  },
+  "A201700044": {
+    "serial": "P16016",
+    "device": "Pyrheliometer MS-56, Eko Instruments",
+    "station": "MORDOR 2 (LACROS)"
+  },
+  "A201700045": {
+    "serial": "202.0217.0812.223",
+    "device": "Weather station WS-300, Lufft",
+    "station": "MORDOR 2 (LACROS)"
+  },
+  "A201700046": {
+    "serial": "170211",
+    "device": "Pyrgeometer CGR4 PT100, Kipp & Zonen",
+    "station": "MORDOR 2 (LACROS)"
+  },
+  // MORDOR 3 (Melpitz)
+  "A201800102": {
+    "serial": "6216",
+    "device": "Logger CR1000X, Campbell Sci.",
+    "station": "MORDOR 3 (Melpitz)"
+  },
+  "A201800103": {
+    "serial": "533.1118.0812.227",
+    "device": "Weather station WS-300, Lufft",
+    "station": "MORDOR 3 (Melpitz)"
+  },
+  "A201800108": {
+    "serial": "180046",
+    "device": "Pyrgeometer SGR4V, Kipp & Zonen",
+    "station": "MORDOR 3 (Melpitz)"
+  },
+  "A201800109": {
+    "serial": "190050",
+    "device": "Pyrgeometer SGR4V, Kipp & Zonen",
+    "station": "MORDOR 3 (Melpitz)"
+  },
+  "A201900001": {
+    "serial": "S18029.07",
+    "device": "Suntracker STR-22G, Eko Instruments",
+    "station": "MORDOR 3 (Melpitz)"
+  },
+  "A201900002": {
+    "serial": "S18030163",
+    "device": "Pyranometer MS-80, Eko Instruments",
+    "station": "MORDOR 3 (Melpitz)"
+  },
+  "A201900003": {
+    "serial": "S18030164",
+    "device": "Pyranometer MS-80, Eko Instruments",
+    "station": "MORDOR 3 (Melpitz)"
+  },
+  "A201900004": {
+    "serial": "S18030166",
+    "device": "Pyranometer MS-80, Eko Instruments",
+    "station": "MORDOR 3 (Melpitz)"
+  },
+  "A201900005": {
+    "serial": "S18015.02",
+    "device": "Pyrheliometer MS-57, Eko Instruments",
+    "station": "MORDOR 3 (Melpitz)"
+  },
+  // MORDOR 4 (Cape Verde)
+  "A202200090": {
+    "serial": "40031",
+    "device": "Logger CR1000X, Campbell Sci.",
+    "station": "MORDOR 4 (Cape Verde)"
+  },
+  "A202200195": {
+    "serial": "154.1222.0812.244",
+    "device": "Weather station WS-300, Lufft",
+    "station": "MORDOR 4 (Cape Verde)"
+  },
+  "A202200019": {
+    "serial": "16297",
+    "device": "All sky imager ASI-16, Eko Instruments",
+    "station": "MORDOR 4 (Cape Verde)"
+  },
+  "A202200020": {
+    "serial": "S21066.03",
+    "device": "Suntracker STR-22G, Eko Instruments",
+    "station": "MORDOR 4 (Cape Verde)"
+  },
+  "A202200021": {
+    "serial": "S21023066",
+    "device": "Pyranometer MS-80, Eko Instruments",
+    "station": "MORDOR 4 (Cape Verde)"
+  },
+  "A202200022": {
+    "serial": "S21023067",
+    "device": "Pyranometer MS-80, Eko Instruments",
+    "station": "MORDOR 4 (Cape Verde)"
+  },
+  "A202200023": {
+    "serial": "S20006.19",
+    "device": "Pyrheliometer MS-57, Eko Instruments",
+    "station": "MORDOR 4 (Cape Verde)"
+  },
+  "A202200024": {
+    "serial": "S21090.04",
+    "device": "Pyrgeometer MS-21, Eko Instruments",
+    "station": "MORDOR 4 (Cape Verde)"
+  },
+  "A202300014": {
+    "serial": "EX23021.01",
+    "device": "Spectrometer MS-711, Eko Instruments",
+    "station": "MORDOR 4 (Cape Verde)"
+  },
+  "A202300015": {
+    "serial": "EX22046.02",
+    "device": "Spectrometer MS-713, Eko Instruments",
+    "station": "MORDOR 4 (Cape Verde)"
+  },
+  // MORDOR 5
+  "A202200091": {
+    "serial": "40032",
+    "device": "Logger CR1000X, Campbell Sci.",
+    "station": "MORDOR 5"
+  },
+  "A202200196": {
+    "serial": "167.1222.0812.244",
+    "device": "Weather station WS-300, Lufft",
+    "station": "MORDOR 5"
+  },
+  "A202200070": {
+    "serial": "16298",
+    "device": "All sky imager ASI-16, Eko Instruments",
+    "station": "MORDOR 5"
+  }
+}

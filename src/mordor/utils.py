@@ -1,12 +1,38 @@
 import os
 import logging
+import numpy as np
+import pandas as pd
+import xarray as xr
 import importlib.resources
 from toolz import keyfilter
 import jstyleson as json
 from addict import Dict as adict
 from operator import itemgetter
+from toolz import valfilter
+
+import trosat.sunpos as sp
 
 logger = logging.getLogger(__name__)
+
+EPOCH_JD_2000_0 = np.datetime64("2000-01-01T12:00")
+def to_datetime64(time, epoch=EPOCH_JD_2000_0):
+    """
+    Convert various representations of time to datetime64.
+
+    Parameters
+    ----------
+    time : list, ndarray, or scalar of type float, datetime or datetime64
+        A representation of time. If float, interpreted as Julian date.
+    epoch : np.datetime64, default JD2000.0
+        The epoch to use for the calculation
+
+    Returns
+    -------
+    datetime64 or ndarray of datetime64
+    """
+    jd = sp.to_julday(time, epoch=epoch)
+    jdms = np.int64(86_400_000*jd)
+    return (epoch + jdms.astype('timedelta64[ms]')).astype("datetime64[ns]")
 
 def read_json(fpath: str, *, object_hook: type = adict, cls = None) -> dict:
     """ Parse json file to python dict.
@@ -116,3 +142,87 @@ def init_logger(config):
         level=logging.DEBUG,
         format='%(asctime)s %(name)s %(levelname)s:%(message)s'
     )
+
+def parse_calibration(cfile,troposID, cdate=None):
+    """
+    Parse calibration json file
+
+    Parameters
+    ----------
+    cfile: str
+        Path of the calibration.json
+    cdate: list, ndarray, or scalar of type float, datetime or datetime64
+        A representation of time. If float, interpreted as Julian date.
+    Returns
+    -------
+    dict
+        Calibration dictionary sorted by box number.
+    """
+    if cdate is not None:
+        cdate = to_datetime64(cdate)
+    calib = read_json(cfile)
+    # parse calibration dates
+    cdates = pd.to_datetime(list(calib.keys()), yearfirst=True).values
+    isort = np.argsort(cdates)
+    skeys = np.array(list(calib.keys()))[isort]
+
+    ctimes, cfacs, cerrs = [], [], []
+    # lookup calibration factors
+    for i, key in enumerate(skeys):
+        if troposID in calib[key]:
+            ctimes.append(cdates[i])
+            cfacs.append(calib[key][troposID][0])
+            if calib[key][troposID][1] is None:
+                cerrs.append(np.nan)
+            else:
+                cerrs.append(calib[key][troposID][1])
+    if len(ctimes) == 0:
+        return None
+
+    ds = xr.Dataset(
+        {
+            "calibration_factor": ("time",np.array(cfacs)),
+            "calibration_error": ("time",np.array(cerrs))
+        },
+        coords={
+            "time": ("time",np.array(ctimes))
+        }
+    )
+    if cdate is not None:
+        ds = ds.sel(time=cdate, method='nearest')
+
+    return ds
+
+
+def meta_lookup(config, *, serial=None, troposID=None, date=None):
+    assert (serial is not None) or (troposID is not None)
+    config = merge_config(config)
+    mapping = read_json(config["file_instrument_map"])
+
+    outdict = {
+        "device": None,
+        "serial": serial,
+        "troposID": troposID,
+        "calibration_factor": None,
+        "calibration_error": None,
+        "calibration_date": None,
+    }
+
+    if troposID is None:
+        mappingres = valfilter(lambda x: serial == x["serial"], mapping)
+        troposID = list(mappingres.keys())[0]
+        outdict.update({"troposID":troposID})
+
+    outdict.update(mapping[troposID])
+
+    calibration = parse_calibration(config["file_calibration"],
+                                    troposID=troposID,
+                                    cdate=date)
+
+    outdict.update({
+        "calibration_factor": calibration.calibration_factor.values.tolist(),
+        "calibration_error": calibration.calibration_error.values.tolist(),
+        "calibration_date": [f"{date:%Y-%m-%d}" for date in pd.to_datetime(calibration.time.values)]
+    })
+
+    return outdict
