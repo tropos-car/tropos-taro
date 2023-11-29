@@ -81,7 +81,7 @@ def process_l1a(input_files,
     config = _configure(config)
     mordor.utils.init_logger(config)
 
-    with click.progressbar(input_files, label='Processing') as files:
+    with click.progressbar(input_files, label='Processing to l1a:') as files:
         for fn in files:
             logger.info("Call mordor.data.to_l1a")
             ds = mordor.data.to_l1a(
@@ -201,6 +201,6 @@ def info(ids:str, calibration:bool, serial:bool, tropos:bool, device:bool, confi
             for d, f, e in zip(meta['calibration_date'],
                                meta['calibration_factor'],
                                meta['calibration_error']):
-                click.echo(f"    {d}: {f:6.3f} (uV/(W m-2)) +- {e:4.2f} (%)")
+                click.echo(f"    {d}: {f:6.3f} ({meta['calibration_factor_units']}) +- {e:4.2f} ({meta['calibration_error_units']})")
             nextd = pd.to_datetime(meta['calibration_date'][-1]) + dt.timedelta(days=366*2)
             click.echo(f"Calibration due: {nextd:%Y-%m}!")

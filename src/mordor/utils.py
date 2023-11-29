@@ -162,7 +162,8 @@ def parse_calibration(cfile,troposID, cdate=None):
         cdate = to_datetime64(cdate)
     calib = read_json(cfile)
     # parse calibration dates
-    cdates = pd.to_datetime(list(calib.keys()), yearfirst=True).values
+    cdates = [ key for key in calib if not key.startswith("units") ]
+    cdates = pd.to_datetime(cdates, yearfirst=True).values
     isort = np.argsort(cdates)
     skeys = np.array(list(calib.keys()))[isort]
 
@@ -181,8 +182,10 @@ def parse_calibration(cfile,troposID, cdate=None):
 
     ds = xr.Dataset(
         {
-            "calibration_factor": ("time",np.array(cfacs)),
-            "calibration_error": ("time",np.array(cerrs))
+            "calibration_factor": ("time", np.array(cfacs)),
+            "calibration_error": ("time", np.array(cerrs)),
+            "calibration_factor_units": calib['units'][0],
+            "calibration_error_units": calib['units'][1]
         },
         coords={
             "time": ("time",np.array(ctimes))
@@ -206,6 +209,8 @@ def meta_lookup(config, *, serial=None, troposID=None, date=None):
         "calibration_factor": None,
         "calibration_error": None,
         "calibration_date": None,
+        "calibration_factor_units": None,
+        "calibration_error_units": None,
     }
 
     if troposID is None:
@@ -222,7 +227,9 @@ def meta_lookup(config, *, serial=None, troposID=None, date=None):
         outdict.update({
             "calibration_factor": calibration.calibration_factor.values.tolist(),
             "calibration_error": calibration.calibration_error.values.tolist(),
-            "calibration_date": [f"{date:%Y-%m-%d}" for date in pd.to_datetime(calibration.time.values)]
+            "calibration_date": [f"{date:%Y-%m-%d}" for date in pd.to_datetime(calibration.time.values)],
+            "calibration_factor_units": calibration.calibration_factor_units.values,
+            "calibration_error_units": calibration.calibration_error_units.values
         })
 
     return outdict
