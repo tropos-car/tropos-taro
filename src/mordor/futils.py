@@ -107,12 +107,12 @@ def update_coverage_meta(ds, timevar='time'):
     ds.attrs.update(gattrs)
     return ds
 
-def resample(ds,freq, method='mean'):
+def resample(ds, freq, method='mean', kwargs={}):
     """ Resample xarray dataset using pandas for speed.
     https://github.com/pydata/xarray/issues/4498#issuecomment-706688398
     """
     # what we want (quickly), but in Pandas form
-    df_h = ds.to_dataframe().resample(freq).apply(method)
+    df_h = ds.to_dataframe().resample(freq).apply(method,kwargs)
     # rebuild xarray dataset with attributes
     vals = []
     for c in df_h.columns:
