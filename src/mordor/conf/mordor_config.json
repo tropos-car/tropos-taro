@@ -4,7 +4,7 @@
 {
   "path_sfx": "{dt:%Y/%m/}",
   "fname_raw": "{loggername}_{table}.dat",
-  "fname_out" : "mordor_{dt:%Y-%m-%d}_{campaign}_{table}_{datalvl}.c{collection:02d}.{sfx}",
+  "fname_out" : "mordor_{dt:%Y-%m-%d}_{campaign}_{table}_{resolution}_{datalvl}.c{collection:02d}.{sfx}",
   // Config Files
   "file_log": "mordor.log",
   "file_cfmeta": "share/mordor_cfmeta.json",
