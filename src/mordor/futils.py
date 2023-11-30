@@ -107,22 +107,32 @@ def update_coverage_meta(ds, timevar='time'):
     ds.attrs.update(gattrs)
     return ds
 
-def resample(ds, freq, method='mean', kwargs={}):
+def resample(ds, freq, methods='mean', kwargs={}):
     """ Resample xarray dataset using pandas for speed.
     https://github.com/pydata/xarray/issues/4498#issuecomment-706688398
     """
-    # what we want (quickly), but in Pandas form
-    df_h = ds.to_dataframe().resample(freq).apply(method,kwargs)
-    # rebuild xarray dataset with attributes
-    vals = []
-    for c in df_h.columns:
-        vals.append(
-            xr.DataArray(data=df_h[c],
-                         dims=['time'],
-                         coords={'time': df_h.index},
-                         attrs=ds[c].attrs)
-        )
-    return xr.Dataset(dict(zip(df_h.columns, vals)), attrs=ds.attrs)
+    if isinstance(methods,str):
+        methods = [methods]
+
+    dsr = ds.to_dataframe().resample(freq)
+    dsouts = []
+    for method in methods:
+        # what we want (quickly), but in Pandas form
+        df_h = dsr.apply(method, kwargs)
+        # rebuild xarray dataset with attributes
+        vals = []
+        for c in df_h.columns:
+            vals.append(
+                xr.DataArray(data=df_h[c],
+                             dims=['time'],
+                             coords={'time': df_h.index},
+                             attrs=ds[c].attrs)
+            )
+        dsouts.append(xr.Dataset(dict(zip(df_h.columns, vals)), attrs=ds.attrs))
+
+    if len(dsouts) == 1:
+        dsouts = dsouts[0]
+    return dsouts
 
 def stretch_resolution(ds):
     """ Stretch variable resolution to full integer size,
