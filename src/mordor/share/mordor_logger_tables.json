@@ -4,21 +4,21 @@
     "Radiation": [
       ["time", ""],
       ["record", ""],
-      ["dflx_sw_dir",""],
-      ["dflx_sw",""],
-      ["dflx_sw_dif",""],
-      ["dflx_lw",""]
+      ["dni",""],
+      ["ghi",""],
+      ["dhi",""],
+      ["lwd",""]
     ],
     "Meteorologie": [
       ["time", ""],
       ["record", ""],
-      ["ta", ""],
-      ["rh", ""],
-      ["tdp", ""],
-      ["pa", ""],
+      ["temp_air", ""],
+      ["relative_humidity", ""],
+      ["temp_dew_point", ""],
+      ["pressure", ""],
       null,null,null,null,null,null,null,null,null,null,null,null,null,
-      ["twb", ""],
-      ["se", ""]
+      ["temp_wet_bulb", ""],
+      ["specific_enthalpy", ""]
     ],
     "SensorStatus": [
       ["time", ""],

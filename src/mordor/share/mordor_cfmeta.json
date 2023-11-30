@@ -50,7 +50,7 @@
         "zlib": true
       }
     },
-    "ta": {
+    "temp_air": {
       "type": "u2",
       "attributes": {
         "units": "K",
@@ -66,7 +66,7 @@
         "zlib": true
       }
     },
-    "rh": {
+    "relative_humidity": {
       "type": "u2",
       "attributes": {
         "units": "1",
@@ -82,7 +82,7 @@
         "zlib": true
       }
     },
-    "pa": {
+    "pressure": {
       "type": "u2",
       "attributes": {
         "units": "Pa",
@@ -98,7 +98,7 @@
         "zlib": true
       }
     },
-    "tdp": {
+    "temp_dew_point": {
       "type": "u2",
       "attributes": {
         "units": "K",
@@ -114,7 +114,7 @@
         "zlib": true
       }
     },
-    "twb": {
+    "temp_wet_bulb": {
       "type": "u2",
       "attributes": {
         "units": "K",
@@ -130,7 +130,7 @@
         "zlib": true
       }
     },
-    "se": {
+    "specific_enthalpy": {
       "type": "u2",
       "attributes": {
         "units": "kJ kg-1",
@@ -148,7 +148,7 @@
         "zlib": true
       }
     },
-    "dflx_sw": {
+    "ghi": {
       "type": "u4",
       "attributes": {
         "long_name": "surface downwelling shortwave flux, also called global horizontal irradiance (GHI)",
@@ -164,7 +164,7 @@
         "zlib": true
       }
     },
-    "dflx_sw_dif": {
+    "dhi": {
       "type": "u4",
       "attributes": {
         "long_name": "surface diffuse downwelling shortwave flux, also called diffuse horizontal irradiance (DHI)",
@@ -180,7 +180,7 @@
         "zlib": true
       }
     },
-    "dflx_sw_dir": {
+    "dni": {
       "type": "u4",
       "attributes": {
         "long_name": "direct downwelling shortwave flux, also called direct normal irradiance (DNI)",
@@ -196,7 +196,7 @@
         "zlib": true
       }
     },
-    "dflx_lw": {
+    "lwd": {
       "type": "u4",
       "attributes": {
         "long_name": "surface downwelling longwave flux",
