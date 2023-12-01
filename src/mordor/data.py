@@ -106,12 +106,11 @@ def to_l1a(
     colunits = colunits.drop_vars(["record"])
 
     # convert to cfmeta units
-    # iterate table_map, as names are suffixed if doubles occur
-    for key in table_map[:,0]:
-        if (key=="record") or (key=="time"):
+    for i,key in enumerate(names):
+        if (key == "record") or (key == "time"):
             continue
         oldunit = colunits[key].values[0]
-        newunit = vattrs[key]["units"]
+        newunit = vattrs[table_map[i, 0]]["units"]
         if oldunit == "%" and newunit == "1":
             ds[key].values = ds[key].values*1e-2
             continue
