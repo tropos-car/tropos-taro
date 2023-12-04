@@ -118,7 +118,7 @@ def resample(ds, freq, methods='mean', kwargs={}):
     dsouts = []
     for method in methods:
         # what we want (quickly), but in Pandas form
-        df_h = dsr.apply(method, kwargs)
+        df_h = dsr.apply(method)
         # rebuild xarray dataset with attributes
         vals = []
         for c in df_h.columns:
@@ -133,28 +133,6 @@ def resample(ds, freq, methods='mean', kwargs={}):
     if len(dsouts) == 1:
         dsouts = dsouts[0]
     return dsouts
-
-def stretch_resolution(ds):
-    """ Stretch variable resolution to full integer size,
-    to not lose resolution after averaging ADC count data."""
-    for var in ds:
-        if "scale_factor" not in ds[var].encoding:
-            continue
-        if "valid_range" not in ds[var].attrs:
-            continue
-        dtype = ds[var].encoding['dtype']
-        valid_range = ds[var].valid_range
-        int_limit = np.iinfo(dtype).max
-        scale_factor = ds[var].encoding['scale_factor']
-        scale_factor_mod = int((int_limit-1)/valid_range[1])
-        ds[var].encoding.update({
-            "scale_factor": scale_factor / scale_factor_mod,
-            "_FillValue": int_limit,
-        })
-        ds[var].attrs.update({
-            "valid_range": valid_range * scale_factor_mod
-        })
-    return ds
 
 def merge_ds(ds1, ds2, timevar="time"):
     """Merge two datasets along the time dimension.
@@ -252,11 +230,11 @@ def add_encoding(ds, vencode=None):
         b = vencode.copy()
         vencode = {}
         for k in set(a)-set(b):
-            vencode.update({k:a[k]})
+            vencode.update({k: a[k]})
         for k in set(a)&set(b):
-            vencode.update({k: {**a[k],**b[k]}})
+            vencode.update({k: {**a[k], **b[k]}})
         for k in set(b)-set(a):
-            vencode.update({k:b[k]})
+            vencode.update({k: b[k]})
 
     # add encoding to Dataset
     for k, v in vencode.items():
@@ -271,14 +249,6 @@ def add_encoding(ds, vencode=None):
             ds[ki].attrs.update({
                 'valid_range': vencode[k]['valid_range']
             })
-    if ds.processing_level == 'l1a':
-        pass
-    elif ds.processing_level in ['l1b']:
-        ds = stretch_resolution(ds)
-    elif "processing_level" not in ds:
-        raise ValueError("Dataset has no 'processing_level' attribute")
-    else:
-        logger.warning("Processing level not implemented in futils.add_encoding!")
 
     # add time encoding
     ds["time"].encoding.update({
