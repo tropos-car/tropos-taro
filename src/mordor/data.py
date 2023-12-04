@@ -12,6 +12,7 @@ import trosat.sunpos as sp
 import mordor
 import mordor.utils
 import mordor.futils
+import mordor.qcrad
 
 logger = logging.getLogger(__name__)
 
@@ -179,33 +180,17 @@ def to_l1b(ds_l1a, resolution, *, config=None):
         logger.warning(f"Is not a l1a file. Skip.")
         return None
 
-    # 1. resample radiation data
     flx_vars = config["l1b_flux_variables"]
-    methods = ['mean'] + config["l1b_resample_stats"]
-    res = mordor.futils.resample(
-        ds_l1a,
-        freq=resolution,
-        methods=methods,
-        kwargs=dict(skipna=True)
-    )
-    ds_l1b = res[0]
-    for i, method in enumerate(methods[1:]):
-        for var in flx_vars:
-            ds_l1b[f"{var}_{method}"] = res[i+1][var]
-            ds_l1b[f"{var}_{method}"].attrs.update({
-                "standard_name": f"{method}_"+ds_l1b[f"{var}_{method}"].attrs["standard_name"]
-            })
+    ds_l1b = ds_l1a.copy()
 
-    # 3. calibrate flux vars
-    flx_vars_all = [key for key in ds_l1b if key.split('_')[0] in flx_vars]
-    for var in flx_vars_all:
+    # 1. calibrate flux vars
+    for var in flx_vars:
         troposID = ds_l1b[var].attrs["troposID"]
         calib = mordor.utils.parse_calibration(
             cfile=config["file_calibration"],
             troposID=troposID,
             cdate=ds_l1b.time.values[0]
         )
-
 
         cfac_unit = _parse_quantity(calib["calibration_factor_units"].values)
         cfac = calib["calibration_factor"].values * cfac_unit
@@ -238,7 +223,6 @@ def to_l1b(ds_l1a, resolution, *, config=None):
             ds_l1b[var].attrs.update({
                 "calibration_function": "flux (W m-2) = flux (V) * calibration_factor (W m-2 V-1)",
             })
-        print(var,ds_l1b[var].values[0],ds_l1b[var].values[0]/cfac,cfac)
         # add new attributes and encoding to calibrated flux vars
         ds_l1b[var].attrs.update({
             "units": "W m-2",
@@ -256,8 +240,34 @@ def to_l1b(ds_l1a, resolution, *, config=None):
         vencode = assoc_in(vencode, [var, 'scale_factor'], scale_factor)
         vencode = assoc_in(vencode, [var, 'add_offset'], add_offset)
 
+    # 2. resample dataset
+    methods = ['mean'] + config["l1b_resample_stats"]
+    res = mordor.futils.resample(
+        ds_l1b,
+        freq=resolution,
+        methods=methods,
+        kwargs=dict(skipna=True)
+    )
+    ds_l1b = res[0]
+    for i, method in enumerate(methods[1:]):
+        for var in flx_vars:
+            ds_l1b[f"{var}_{method}"] = res[i+1][var]
+            ds_l1b[f"{var}_{method}"].attrs.update({
+                "standard_name": f"{method}_"+ds_l1b[f"{var}_{method}"].attrs["standard_name"]
+            })
+
+    # 3. add coordinats if available in config
+    if config["coordinates"] is not None:
+        lat, lon, alt = config["coordinates"]
+        if lat is not None:
+            ds_l1b["lat"] = lat
+        if lon is not None:
+            ds_l1b["lon"] = lon
+        if alt is not None:
+            ds_l1b["altitude"] = alt
+
+    # 4. add sun position
     if ("lat" in ds_l1b) and ("lon" in ds_l1b):
-        # 4. Calc and add sun position
         szen, sazi = sp.sun_angles(
             time=ds_l1b.time.values,
             lat=ds_l1b.lat.values,
@@ -279,17 +289,10 @@ def to_l1b(ds_l1a, resolution, *, config=None):
         for key in ['szen', 'sazi', 'esd']:
             ds_l1b[key].attrs.update(vattrs[key])
 
-    # add coordinats if available in config
-    if config["coordinates"] is not None:
-        lat, lon, alt = config["coordinates"]
-        if lat is not None:
-            ds_l1b["lat"] = lat
-        if lon is not None:
-            ds_l1b["lon"] = lon
-        if alt is not None:
-            ds_l1b["altitude"] = alt
+    # 5. add BSRN quality flags
+    ds_l1b = mordor.qcrad.quality_control(ds_l1b)
 
-    # add global coverage attributes
+    # 6. add global coverage attributes
     ds_l1b = mordor.futils.update_coverage_meta(ds_l1b, timevar="time")
     ds_l1b.attrs["processing_level"] = 'l1b'
     now = pd.to_datetime(np.datetime64("now"))
