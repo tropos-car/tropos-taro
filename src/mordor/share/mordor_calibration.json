@@ -2,6 +2,10 @@
   // MORDOR broadband sensor calibrations
   // [calibration_factor, calibration_factor_uncertainty]
   "units": ["uV W-1 m2", "%"],
+  "temp_correction": {
+    // Temperature correction coefficients
+    "A202200024": [5.6111e-6, -1.29e-4, -6.0915e-5]
+  },
   "2012-10-01": {
     "A201200137": [7.407, null],
     "A201200139": [8.62, null],
