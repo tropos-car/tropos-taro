@@ -42,7 +42,7 @@
         "comment": "normal operation is at around 100Hz",
         "standard_name": "frequency",
         "scale_factor": 1.0,
-        "add_offset": -100.0,
+        "add_offset": 100.0,
         "_FillValue":-128,
         "valid_range": [
           -100,100
@@ -89,7 +89,7 @@
         "long_name": "air pressure",
         "standard_name": "air_pressure",
         "scale_factor": 0.4,
-        "add_offset:": 85000,
+        "add_offset": 85000,
         "valid_range": [
           0,
           62500
@@ -306,6 +306,7 @@
       "attributes": {
         "standard_name": "altitude",
         "units": "m",
+        "_FillValue": -1,
         "zlib": true
       }
     }
