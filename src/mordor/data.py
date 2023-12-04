@@ -6,7 +6,8 @@ import numpy as np
 import parse
 import logging
 from unitpy import Unit
-from toolz import keyfilter, valfilter
+from toolz import keyfilter, valfilter, assoc_in
+import trosat.sunpos as sp
 
 import mordor
 import mordor.utils
@@ -15,9 +16,18 @@ import mordor.futils
 logger = logging.getLogger(__name__)
 
 def _parse_unit(unit):
+    unit = str(unit)
+    if unit == "%":
+        return ''
     # add ^ before numbers
     unit = re.sub("-?[0-9]","^\g<0>", unit)
     return unit
+
+def _parse_quantity(unit):
+    punit = _parse_unit(unit)
+    if unit == "%":
+        return 1e-2*Unit(punit)
+    return 1.*Unit(punit)
 
 def to_l1a(
         fname: str,
@@ -159,3 +169,134 @@ def to_l1a(
     ds = mordor.futils.add_encoding(ds, vencode)
 
     return ds
+
+
+def to_l1b(ds_l1a, resolution, *, config=None):
+    config = mordor.utils.merge_config(config)
+    gattrs, vattrs, vencode = mordor.futils.get_cfmeta(config)
+
+    if ds_l1a.processing_level != "l1a":
+        logger.warning(f"Is not a l1a file. Skip.")
+        return None
+
+    # 1. resample radiation data
+    flx_vars = config["l1b_flux_variables"]
+    methods = ['mean'] + config["l1b_resample_stats"]
+    res = mordor.futils.resample(
+        ds_l1a,
+        freq=resolution,
+        methods=methods,
+        kwargs=dict(skipna=True)
+    )
+    ds_l1b = res[0]
+    for i, method in enumerate(methods[1:]):
+        for var in flx_vars:
+            ds_l1b[f"{var}_{method}"] = res[i+1][var]
+            ds_l1b[f"{var}_{method}"].attrs.update({
+                "standard_name": f"{method}_"+ds_l1b[f"{var}_{method}"].attrs["standard_name"]
+            })
+
+    # 3. calibrate flux vars
+    flx_vars_all = [key for key in ds_l1b if key.split('_')[0] in flx_vars]
+    for var in flx_vars_all:
+        troposID = ds_l1b[var].attrs["troposID"]
+        calib = mordor.utils.parse_calibration(
+            cfile=config["file_calibration"],
+            troposID=troposID,
+            cdate=ds_l1b.time.values[0]
+        )
+
+
+        cfac_unit = _parse_quantity(calib["calibration_factor_units"].values)
+        cfac = calib["calibration_factor"].values * cfac_unit
+        cdate = f"{pd.to_datetime(calib.time.values):%Y-%m}"
+        # assume cfac unit in the form ( units_of_Voltage / (Wm-2) )
+        cfac = ((1./cfac).to(f"W m^-2 {ds_l1b[var].attrs['units']}^-1")).value
+
+        # Longwave calibration
+        if "longwave" in ds_l1b[var].attrs["standard_name"]:
+            # select sensor temperature
+            dstemp = ds_l1b.filter_by_attrs(troposID=troposID)
+            for key in dstemp:
+                if key.startswith("sensor_temperature"):
+                    temp_sensor = dstemp[key].values * Unit(dstemp[key].attrs['units'])
+            # measured Voltage
+            V0 = ds_l1b[var].values
+            # temperature correction
+            if "temperature_correction_coef" in calib:
+                a, b, c = calib["temperature_correction_coef"].values
+                T = (temp_sensor.to("degC")).value
+                V0 *= (1. + a*(T**2) + b*T + c)
+            # calibrate to W m-2
+            ds_l1b[var].values = V0 * cfac + 5.670367e-8 * ((temp_sensor.to("K")).value**4)
+            ds_l1b[var].attrs.update({
+                "calibration_function": "flux (W m-2) = flux (V) * calibration_factor (W m-2 V-1) + 5.670367e-8 * (sensor_temperature (K))**4",
+            })
+        else:
+            ds_l1b[var].values = ds_l1b[var].values*cfac
+            ds_l1b[var].values[ds_l1b[var].values < 0] = 0.
+            ds_l1b[var].attrs.update({
+                "calibration_function": "flux (W m-2) = flux (V) * calibration_factor (W m-2 V-1)",
+            })
+        print(var,ds_l1b[var].values[0],ds_l1b[var].values[0]/cfac,cfac)
+        # add new attributes and encoding to calibrated flux vars
+        ds_l1b[var].attrs.update({
+            "units": "W m-2",
+            "calibration_factor": calib["calibration_factor"].values,
+            "calibration_factor_units": calib["calibration_factor_units"].values,
+            "calibration_error": calib["calibration_error"].values,
+            "calibration_error_units": calib["calibration_error_units"].values,
+            "calibration_date": cdate,
+        })
+        scale_factor = 1e-4
+        add_offset = 0.
+        valid_range = np.array([0, 2000])  # valid range in data units W m-2
+        valid_range = ((valid_range - add_offset)/scale_factor).astype(int)
+        vencode = assoc_in(vencode, [var,'valid_range'],list(valid_range))
+        vencode = assoc_in(vencode, [var, 'scale_factor'], scale_factor)
+        vencode = assoc_in(vencode, [var, 'add_offset'], add_offset)
+
+    if ("lat" in ds_l1b) and ("lon" in ds_l1b):
+        # 4. Calc and add sun position
+        szen, sazi = sp.sun_angles(
+            time=ds_l1b.time.values,
+            lat=ds_l1b.lat.values,
+            lon=ds_l1b.lon.values
+        )
+        szen = szen.squeeze()
+        sazi = sazi.squeeze()
+
+        esd = np.mean(sp.earth_sun_distance(ds_l1b.time.values))
+
+        ds_l1b = ds_l1b.assign(
+            {
+                "szen": (("time"), szen),
+                "sazi": (("time"), sazi),
+                "esd":  esd
+            }
+        )
+        # update attributes and encoding
+        for key in ['szen', 'sazi', 'esd']:
+            ds_l1b[key].attrs.update(vattrs[key])
+
+    # add coordinats if available in config
+    if config["coordinates"] is not None:
+        lat, lon, alt = config["coordinates"]
+        if lat is not None:
+            ds_l1b["lat"] = lat
+        if lon is not None:
+            ds_l1b["lon"] = lon
+        if alt is not None:
+            ds_l1b["altitude"] = alt
+
+    # add global coverage attributes
+    ds_l1b = mordor.futils.update_coverage_meta(ds_l1b, timevar="time")
+    ds_l1b.attrs["processing_level"] = 'l1b'
+    now = pd.to_datetime(np.datetime64("now"))
+    ds_l1b.attrs["history"] = ds_l1b.history + f"{now.isoformat()}: Generated level l1b  by mordor version {mordor.__version__}; "
+    ds_l1b.attrs['product_version'] = mordor.__version__
+
+    # update encoding
+    ds_l1b = mordor.futils.add_encoding(ds_l1b, vencode=vencode)
+
+    return ds_l1b

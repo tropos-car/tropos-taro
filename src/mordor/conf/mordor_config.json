@@ -21,6 +21,9 @@
   "coordinates": null, // null or [latitude (degN), longitude (degE), altitude (m)]
   // to_l1a config
   "logger_name": "CR1000X", // Loggernet - Loggername
+  // to_l1b config
+  "l1b_flux_variables": ["dni","ghi","dhi","lwd"], // netcdf flux variable names to be calibrated
+  "l1b_resample_stats": ["min", "max", "std"], // additional statistics from resample for flux variables
   // Additional global attributes to store in the output Dataset
   // e.g., "comment", "acknowledgement"
   "global_attrs" : {}

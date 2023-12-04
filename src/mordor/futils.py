@@ -176,6 +176,33 @@ def to_netcdf(ds, fname, timevar="time"):
     ds.to_netcdf(fname,
                  encoding={timevar:{'dtype':'float64'}}) # for OpenDAP 2 compatibility
 
+
+def merge_with_rename(dss, dim='time', override=[]):
+    coord = np.unique(
+        xr.concat(
+            [ds[dim].coords[list(ds[dim].coords)[0]] for ds in dss], dim=dim
+        )
+    )
+    dss = [ds.reindex({dim: coord}) for ds in dss]
+
+    dsm = dss[0]
+    for ds in dss[1:]:
+        for key in ds:
+            if key in override:
+                dsm = dsm.assign({key: ds[key]})
+                continue
+            if key in dsm:
+                if key.split('_')[-1].isnumeric():
+                    keyr = '_'.join(key.split('_')[:-1])
+                else:
+                    keyr = key
+                no = int(np.sum([True for key in dsm if key.startswith(keyr)]))
+                dsm = dsm.assign({keyr + f"_{no}": ds[key]})
+            else:
+                dsm = dsm.assign({key: ds[key]})
+    return dsm
+
+
 def get_cfmeta(config=None):
     """Read global and variable attributes and encoding from cfmeta.json
     """

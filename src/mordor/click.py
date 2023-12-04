@@ -3,6 +3,7 @@ import os.path
 import click
 import logging
 import parse
+import xarray as xr
 import pandas as pd
 import numpy as np
 import datetime as dt
@@ -113,6 +114,85 @@ def process_l1a(input_files,
                 timevar="time"
             )
 
+@process.command("l1b")
+@click.argument("input_files", nargs=-1)
+@click.argument("output_path", nargs=1)
+@click.option("--resolution","-r",
+              default='1min', show_default=True,
+              help="Time resolution of output file.")
+@click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
+              help="Config file - will merge and override the default config.")
+def process_l1b(input_files,
+                output_path: str,
+                resolution:str,
+                config: str):
+    """
+    Process input files (mordor l1a) to mordor l1b files.
+    Input files require at least the Radiation table (SensorStatus and Meteorologie are then assumed to be in the same directory).
+    Flux variables are calibrated and corrected for sensor temperature.
+    Dataset is resampled to desired resolution.
+    Sun coordinate parameters are added.
+    """
+    config = _configure(config)
+    mordor.utils.init_logger(config)
+
+    fdates = []
+    for fn in input_files:
+        finfo = parse.parse(
+            config["fname_out"].replace("%Y-%m-%d", "ti"),
+            os.path.basename(fn)
+        )
+        fdates.append(finfo["dt"])
+    udays, indices = np.unique(fdates, return_inverse=True)
+
+
+    with click.progressbar(udays, label='Processing to l1b:') as days:
+        for i, day in enumerate(days):
+            ifiles = np.argwhere(indices == i).ravel()
+            files = [input_files[j] for j in ifiles]
+            ds_l1a = mordor.futils.merge_with_rename(
+                [xr.load_dataset(fn) for fn in files],
+                dim="time",
+                override=['lat','lon','altitude']
+            )
+            ds_l1a = ds_l1a.interpolate_na('time')
+
+            logger.info("Call mordor.data.to_l1a")
+            ds = mordor.data.to_l1b(
+                ds_l1a,
+                resolution=resolution,
+                config=config
+            )
+            if ds is None:
+                logger.warning(f"Skip {fn}.")
+                continue
+
+            fname_info = parse.parse(
+                config["fname_out"].replace("%Y-%m-%d", "ti"),
+                os.path.basename(files[0])
+            ).named
+
+            fname_info.update({
+                "table": "complete",
+                "resolution": resolution,
+                "datalvl": "l1b",
+            })
+
+            outfile = os.path.join(output_path,
+                                   "{dt:%Y/%m/}",
+                                   config['fname_out'])
+            outfile = outfile.format_map(fname_info)
+            # for key in ds:
+            #     if "time" not in ds[key].dims:
+            #         continue
+            #     print(key)
+            #     dst=ds[key]
+            mordor.futils.to_netcdf(
+                ds=ds,
+                fname=outfile,
+                timevar="time"
+            )
+
 ###########################
 # MORDOR info
 ###########################
@@ -197,6 +277,9 @@ def info(ids:str, calibration:bool, serial:bool, tropos:bool, device:bool, confi
         if device:
             click.echo(f"Device:    {meta['station']} - {meta['device']}")
         if calibration and meta['calibration_date'] is not None:
+            if "temperature_correction_coef" in meta:
+                click.echo("Temperature correction coefficients:")
+                click.echo(f"    {meta['temperature_correction_coef']}")
             click.echo("Calibrations:")
             for d, f, e in zip(meta['calibration_date'],
                                meta['calibration_factor'],

@@ -162,10 +162,10 @@ def parse_calibration(cfile,troposID, cdate=None):
         cdate = to_datetime64(cdate)
     calib = read_json(cfile)
     # parse calibration dates
-    cdates = [ key for key in calib if not key.startswith("units") ]
-    cdates = pd.to_datetime(cdates, yearfirst=True).values
+    date_keys = [ key for key in calib if key.startswith("2") ]
+    cdates = pd.to_datetime(date_keys, yearfirst=True).values
     isort = np.argsort(cdates)
-    skeys = np.array(list(calib.keys()))[isort]
+    skeys = np.array(date_keys)[isort]
 
     ctimes, cfacs, cerrs = [], [], []
     # lookup calibration factors
@@ -191,6 +191,11 @@ def parse_calibration(cfile,troposID, cdate=None):
             "time": ("time",np.array(ctimes))
         }
     )
+
+    # add temperature correction coefficients
+    if ("temp_correction" in calib) and (troposID in calib["temp_correction"]):
+        ds["temperature_correction_coef"] = calib["temp_correction"][troposID]
+
     if cdate is not None:
         ds = ds.sel(time=cdate, method='nearest')
 
@@ -231,5 +236,9 @@ def meta_lookup(config, *, serial=None, troposID=None, date=None):
             "calibration_factor_units": calibration.calibration_factor_units.values,
             "calibration_error_units": calibration.calibration_error_units.values
         })
+        if "temperature_correction_coef" in calibration:
+            outdict.update({
+                "temperature_correction_coef": calibration.temperature_correction_coef.values
+            })
 
     return outdict
