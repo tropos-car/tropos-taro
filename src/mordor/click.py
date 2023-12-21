@@ -8,11 +8,13 @@ import pandas as pd
 import numpy as np
 import datetime as dt
 import importlib.resources
+import matplotlib.pyplot as plt
 
 import mordor
 import mordor.utils
 import mordor.futils
 import mordor.data
+import mordor.plot
 
 
 logger = logging.getLogger(__name__)
@@ -192,6 +194,98 @@ def process_l1b(input_files,
                 fname=outfile,
                 timevar="time"
             )
+
+###########################
+# MORDOR plot
+###########################
+@cli.group("quicklook")
+def quickook():
+    print("Make quicklooks")
+
+@quickook.command("data")
+@click.argument("input_files", nargs=-1)
+@click.argument("output_path", nargs=1)
+@click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
+              help="Config file - will merge and override the default config.")
+@click.option("--dpi", type=int, nargs=1,
+              default=300, show_default=True,
+              help="DPI for output png-file.")
+def ql_data(input_files, output_path, config,dpi):
+    config = _configure(config)
+    mordor.utils.init_logger(config)
+
+    with click.progressbar(input_files, label='Make daily data quicklooks:') as files:
+        for fn in files:
+            ds_l1b = xr.load_dataset(fn)
+            fig, axs = plt.subplots(2, 1, figsize=(8, 8))
+            plots = ds_l1b.quicklooks.flux(ax=axs[0])
+            pl, (ax, pax, rax) = ds_l1b.quicklooks.meteorology(ax=axs[1], legend=False)
+            ax.legend(handles=pl, loc='lower right')
+
+            fname_info = parse.parse(
+                config["fname_out"].replace("%Y-%m-%d", "ti"),
+                os.path.basename(fn)
+            ).named
+
+            fname_info.update({
+                "table": "data",
+                "sfx": "png"
+            })
+
+            outfile = os.path.join(output_path,
+                                   "{dt:%Y/%m/}",
+                                   config['fname_out'])
+            outfile = outfile.format_map(fname_info)
+
+            os.makedirs(os.path.dirname(outfile), exist_ok=True)
+            fig.savefig(outfile, dpi=dpi)
+            plt.close(fig)
+
+@quickook.command("quality")
+@click.argument("input_files", nargs=-1)
+@click.argument("output_path", nargs=1)
+@click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
+              help="Config file - will merge and override the default config.")
+@click.option("--dpi", type=int, nargs=1,
+              default=300, show_default=True,
+              help="DPI for output png-file.")
+def ql_quality(input_files, output_path, config, dpi):
+    config = _configure(config)
+    mordor.utils.init_logger(config)
+
+    with click.progressbar(input_files, label='Make daily quality quicklooks:') as files:
+        for fn in files:
+            ds_l1b = xr.load_dataset(fn)
+            fig, axs = plt.subplots(3, 1, figsize=(10, 12), constrained_layout=True,
+                                    gridspec_kw={"height_ratios": [2, 1, 2]})
+
+            pl_status, (ax_s1, ax_s2) = ds_l1b.quicklooks.status(ax=axs[0])
+            ds_l1b.quicklooks.quality_range_dhi2ghi(ax=axs[1], ratio=True, kwargs={'alpha': 0.5})
+            ds_l1b.quicklooks.quality_range_shading(ax=axs[1], ratio=True, kwargs={'alpha': 0.5, 'hatch': '//'})
+            ds_l1b.quicklooks.quality_range_lwd2temp(ax=axs[1], ratio=True, kwargs={'alpha': 0.5})
+
+            axs[1].legend(bbox_to_anchor=(1, 1))
+
+            pl_flags = ds_l1b.quicklooks.quality_flags(ax=axs[2], freq='15min')
+
+            fname_info = parse.parse(
+                config["fname_out"].replace("%Y-%m-%d", "ti"),
+                os.path.basename(fn)
+            ).named
+
+            fname_info.update({
+                "table": "quality",
+                "sfx": "png"
+            })
+
+            outfile = os.path.join(output_path,
+                                   "{dt:%Y/%m/}",
+                                   config['fname_out'])
+            outfile = outfile.format_map(fname_info)
+
+            os.makedirs(os.path.dirname(outfile), exist_ok=True)
+            fig.savefig(outfile, dpi=dpi)
+            plt.close(fig)
 
 ###########################
 # MORDOR info

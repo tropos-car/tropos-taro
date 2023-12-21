@@ -34,6 +34,11 @@ def to_datetime64(time, epoch=EPOCH_JD_2000_0):
     jdms = np.int64(86_400_000*jd)
     return (epoch + jdms.astype('timedelta64[ms]')).astype("datetime64[ns]")
 
+def round_to(base, x):
+    """ Round x to a given base
+    """
+    return base * np.round(x/base, 0)
+
 def read_json(fpath: str, *, object_hook: type = adict, cls = None) -> dict:
     """ Parse json file to python dict.
     """

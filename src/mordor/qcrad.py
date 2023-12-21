@@ -17,13 +17,20 @@ class CONSTANTS:
     S0 = 1367  # W m-2
     k = 5.67*1e-8
 
-
 class SNAMES:
+    szen = "solar_zenith_angle"
     dni = "surface_direct_along_beam_shortwave_flux_in_air"
     ghi = "surface_downwelling_shortwave_flux_in_air"
     dhi = "surface_diffuse_downwelling_shortwave_flux_in_air"
     lwd = "surface_downwelling_longwave_flux_in_air"
     tair = "air_temperature"
+    tdew = "dew_point_temperature"
+    twb = "wet_bulb_temperature"
+    tsens = "temperature_of_sensor"
+    pair = "air_pressure"
+    rh = "relative_humidity"
+    qc = "quality_flag"
+    freq = "frequency"
 
 def quality_control(ds, lat=None, lon=None):
     def _init_qc(ds, var):
@@ -99,7 +106,7 @@ def quality_control(ds, lat=None, lon=None):
                 dhi = ds[dhivar].values
                 sumsw = dni*mu0 + dhi
                 ratio = np.ones(ds.time.size)
-                ratio[sumsw>50] = ds[var].values[sumsw>50]/sumsw[sumsw>50]
+                ratio[sumsw > 50] = ds[var].values[sumsw > 50]/sumsw[sumsw > 50]
                 thres_low = np.ones(ds.time.size)*0.92
                 thres_low[szen>75] = 0.85
                 thres_high = np.ones(ds.time.size) * 1.08
