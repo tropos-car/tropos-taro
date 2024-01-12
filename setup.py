@@ -43,7 +43,8 @@ setup(
         "psycopg2-binary",
         "parse>=1.20.0",
         "unitpy",
-        "scipy"
+        "scipy",
+        "matplotlib"
     ],
     extras_require={
         "docs": [
