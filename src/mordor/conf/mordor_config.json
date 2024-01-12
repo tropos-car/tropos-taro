@@ -5,6 +5,8 @@
   "path_sfx": "{dt:%Y/%m/}",
   "fname_raw": "{loggername}_{table}.dat",
   "fname_out" : "mordor_{dt:%Y-%m-%d}_{campaign}_{table}_{resolution}_{datalvl}.c{collection:02d}.{sfx}",
+  "asi16_raw" : "{dt:%Y%m%d%H%M%S}_{shot:d}.jpg",
+  "asi16_out" : "asi16_{campaign}_{dt:%Y%m%d%H%M%S}_{shot:d}.{sfx}",
   // Config Files
   "file_log": "mordor.log",
   "file_cfmeta": "share/mordor_cfmeta.json",
@@ -19,6 +21,8 @@
   "contributor_role": "", // Role of any of the contributing individuals
   "collection": 1, //Processing collection
   "coordinates": null, // null or [latitude (degN), longitude (degE), altitude (m)]
+  // asi16 config
+  "asi16_id": "", // Tropos ID of ASI-16 camera
   // to_l1a config
   "logger_name": "CR1000X", // Loggernet - Loggername
   // to_l1b config

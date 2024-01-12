@@ -23,6 +23,7 @@ setup(
     entry_points={
         "console_scripts": [
             "mordor = mordor.click:cli",
+            "asi16 = mordor.click:cli_asi16",
             "cloud_coverage = mordor.cloud_coverage:adjust",
         ],
     },

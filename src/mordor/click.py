@@ -381,3 +381,117 @@ def info(ids:str, calibration:bool, serial:bool, tropos:bool, device:bool, confi
                 click.echo(f"    {d}: {f:6.3f} ({meta['calibration_factor_units']}) +- {e:4.2f} ({meta['calibration_error_units']})")
             nextd = pd.to_datetime(meta['calibration_date'][-1]) + dt.timedelta(days=366*2)
             click.echo(f"Calibration due: {nextd:%Y-%m}!")
+
+
+
+@click.version_option()
+@click.group("asi16")
+def cli_asi16():
+    pass
+
+
+def asi16_missing_dates(
+        images_path: str,
+        processed_path: str,
+        config: dict):
+    img_files = []
+    img_dates = []
+    for p, d, f in os.walk(images_path):
+        img_files += [os.path.join(p, fi) for fi in f if fi.endswith(".jpg")]
+    for fn in img_files:
+        finfo = parse.parse(config['asi16_out'], os.path.basename(fn)).named
+        img_dates.append(finfo["dt"])
+    img_dates = np.unique(img_dates)
+
+    pro_files = []
+    pro_dates = []
+    for p, d, f in os.walk(processed_path):
+        pro_files += [os.path.join(p, fi) for fi in f if fi.endswith(".bmp")]
+    for fn in pro_files:
+        finfo = parse.parse(config['asi16_out'], os.path.basename(fn)).named
+        pro_dates.append(finfo["dt"])
+    pro_dates = np.unique(pro_dates)
+
+    missing_dates = np.setdiff1d(img_dates, pro_dates, assume_unique=True)
+    return missing_dates
+
+@cli_asi16.command("status")
+@click.argument("images_path", nargs=1)
+@click.argument("processed_path", nargs=1)
+@click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
+              help="Config file - will merge and override the default config.")
+def asi16_check_processed(
+        images_path: str,
+        processed_path: str,
+        config: str):
+
+    config = _configure(config)
+    missing_dates = asi16_missing_dates(
+        images_path=images_path,
+        processed_path=processed_path,
+        config=config
+    )
+    mdates, counts = np.unique(missing_dates.astype("datetime64[D]"), return_counts=True)
+
+    print("Unprocessed cases:")
+    print("date      , cases")
+    for date, count in zip(mdates,counts):
+        print(f"{date}, {count:4d}")
+
+@cli_asi16.command("move2raw")
+@click.argument("images_path", nargs=1)
+@click.argument("processed_path", nargs=1)
+@click.argument("raw_path", nargs=1)
+@click.option("--shot",'-s',nargs=1,
+                default=11,type=int,
+                show_default=True,
+                help="Shot configuration id.")
+@click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
+              help="Config file - will merge and override the default config.")
+def asi16_move_unprocessed(
+        images_path: str,
+        processed_path: str,
+        raw_path: str,
+        shot: int,
+        config: str):
+    config = _configure(config)
+    missing_dates = asi16_missing_dates(
+        images_path=images_path,
+        processed_path=processed_path,
+        config=config
+    )
+
+    img_files = []
+    for p, d, f in os.walk(images_path):
+        img_files += [os.path.join(p, fi) for fi in f if fi.endswith(".jpg")]
+    for fn in img_files:
+        finfo = parse.parse(config['asi16_out'], os.path.basename(fn)).named
+        if (finfo["dt"] in missing_dates) and (finfo["shot"] == shot):
+            path_raw = os.path.join(raw_path, f"{finfo['dt']:%Y%m%d/}")
+            fname_raw = config['asi16_raw'].format(
+                dt=finfo["dt"],
+                shot=finfo["shot"]
+            )
+            os.makedirs(path_raw, exist_ok=True)
+            os.rename(fn,os.path.join(path_raw, fname_raw))
+
+    #
+    #
+    # for date in missing_dates:
+    #     path_img = os.path.join(images_path, f"{date:%Y/%m/%d/}")
+    #     fname_img = config['asi16_out'].format(
+    #         dt=pd.to_datetime(date),
+    #         campaign=config['campaign'],
+    #         shot=shot,
+    #         sfx='jpg'
+    #     )
+    #     path_raw = os.path.join(raw_path,f"{date:%Y%m%d/}")
+    #     fname_raw = config['asi16_raw'].format(
+    #         dt=pd.to_datetime(date),
+    #         shot=shot
+    #     )
+    #     os.makedirs(path_raw, exist_ok=True)
+    #     os.rename(
+    #         os.path.join(path_img, fname_img),
+    #         os.path.join(path_raw, fname_raw)
+    #     )
