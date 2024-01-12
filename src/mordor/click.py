@@ -96,7 +96,7 @@ def process_l1a(input_files,
                 continue
 
             fname_info = parse.parse(
-                config["fname_out"].replace("%Y-%m-%d", "ti"),
+                config["fname_out"],
                 os.path.basename(fn)
             ).named
 
@@ -141,7 +141,7 @@ def process_l1b(input_files,
     fdates = []
     for fn in input_files:
         finfo = parse.parse(
-            config["fname_out"].replace("%Y-%m-%d", "ti"),
+            config["fname_out"],
             os.path.basename(fn)
         )
         fdates.append(finfo["dt"])
@@ -170,7 +170,7 @@ def process_l1b(input_files,
                 continue
 
             fname_info = parse.parse(
-                config["fname_out"].replace("%Y-%m-%d", "ti"),
+                config["fname_out"],
                 os.path.basename(files[0])
             ).named
 
@@ -223,7 +223,7 @@ def ql_data(input_files, output_path, config,dpi):
             ax.legend(handles=pl, loc='lower right')
 
             fname_info = parse.parse(
-                config["fname_out"].replace("%Y-%m-%d", "ti"),
+                config["fname_out"],
                 os.path.basename(fn)
             ).named
 
@@ -269,7 +269,7 @@ def ql_quality(input_files, output_path, config, dpi):
             pl_flags = ds_l1b.quicklooks.quality_flags(ax=axs[2], freq='15min')
 
             fname_info = parse.parse(
-                config["fname_out"].replace("%Y-%m-%d", "ti"),
+                config["fname_out"],
                 os.path.basename(fn)
             ).named
 

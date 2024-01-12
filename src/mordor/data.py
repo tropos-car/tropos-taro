@@ -63,7 +63,7 @@ def to_l1a(
     # 1. Parse raw file
     # Parse table info
     fname_info = parse.parse(
-        config["fname_out"].replace("%Y-%m-%d", "ti"),
+        config["fname_out"],
         os.path.basename(fname)
     )
     table_config = mordor.utils.read_json(config["file_logger_tables"])[fname_info["table"]]

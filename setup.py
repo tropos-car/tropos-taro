@@ -40,7 +40,7 @@ setup(
         "configparser",
         "pandas",
         "psycopg2-binary",
-        "parse",
+        "parse>=1.20.0",
         "unitpy",
         "scipy"
     ],
