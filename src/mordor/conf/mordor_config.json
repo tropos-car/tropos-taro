@@ -5,8 +5,8 @@
   "path_sfx": "{dt:%Y/%m/}",
   "fname_raw": "{loggername}_{table}.dat",
   "fname_out" : "mordor_{dt:%Y-%m-%d}_{campaign}_{table}_{resolution}_{datalvl}.c{collection:02d}.{sfx}",
-  "asi16_raw" : "{dt:%Y%m%d%H%M%S}_{shot:d}.jpg",
-  "asi16_out" : "asi16_{campaign}_{dt:%Y%m%d%H%M%S}_{shot:d}.{sfx}",
+  "asi16_raw" : "{dt:%Y%m%d%H%M%S}_{shot}.jpg",
+  "asi16_out" : "asi16_{campaign}_{dt:%Y%m%d%H%M%S}_{shot}.{sfx}",
   // Config Files
   "file_log": "mordor.log",
   "file_cfmeta": "share/mordor_cfmeta.json",

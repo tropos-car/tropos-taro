@@ -442,8 +442,8 @@ def asi16_check_processed(
 @click.argument("images_path", nargs=1)
 @click.argument("processed_path", nargs=1)
 @click.argument("raw_path", nargs=1)
-@click.option("--shot",'-s',nargs=1,
-                default=11,type=int,
+@click.option("--shot", '-s', nargs=1,
+                default="11",
                 show_default=True,
                 help="Shot configuration id.")
 @click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
@@ -473,7 +473,7 @@ def asi16_move_unprocessed(
                 shot=finfo["shot"]
             )
             os.makedirs(path_raw, exist_ok=True)
-            os.rename(fn,os.path.join(path_raw, fname_raw))
+            os.rename(fn, os.path.join(path_raw, fname_raw))
 
     #
     #
