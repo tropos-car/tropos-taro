@@ -51,7 +51,7 @@ def raw2daily(inpath, outpath, tables=None, config=None):
                 outpath,
                 config["path_sfx"],
                 config["fname_out"]
-            ).format(dt=uday, resolution='full', datalvl='l1a', sfx='dat', table=table, **config)
+            ).format(dt=uday, resolution='full', datalvl='l0', sfx='dat', table=table, **config)
             # create directory structure
             os.makedirs(os.path.dirname(outfname), exist_ok=True)
             # write daily file
