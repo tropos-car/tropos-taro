@@ -1,4 +1,5 @@
 import os.path
+import warnings
 
 import click
 import logging
@@ -390,46 +391,135 @@ def cli_asi16():
     pass
 
 
+# def asi16_missing_dates(
+#         images_path: str,
+#         processed_path: str,
+#         config: dict,
+#         raw: bool = True
+# ):
+#     fname_tmp = config['asi16_raw'] if raw else config['asi16_out']
+#     img_files = []
+#     img_dates = []
+#     for p, d, f in os.walk(images_path):
+#         img_files += [os.path.join(p, fi) for fi in f if fi.endswith(".jpg")]
+#     for fn in img_files:
+#         finfo = parse.parse(fname_tmp, os.path.basename(fn)).named
+#         img_dates.append(finfo["dt"])
+#     img_dates = np.unique(img_dates)
+#
+#     pro_files = []
+#     pro_dates = []
+#     for p, d, f in os.walk(processed_path):
+#         pro_files += [os.path.join(p, fi) for fi in f if fi.endswith(".bmp")]
+#     for fn in pro_files:
+#         finfo = parse.parse(fname_tmp, os.path.basename(fn)).named
+#         pro_dates.append(finfo["dt"])
+#     pro_dates = np.unique(pro_dates)
+#
+#     missing_dates = np.setdiff1d(img_dates, pro_dates, assume_unique=True)
+#     return missing_dates
+
+
+@cli_asi16.command("move")
+@click.argument("image_files", nargs=-1)
+@click.argument("out_path", nargs=1)
+@click.option("--raw/--no-raw",
+              default=True, show_default=True,
+              help="Defines the type of image_path data.")
+@click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
+              help="Config file - will merge and override the default config.")
+def asi16_move(
+        image_files: list,
+        out_path: str,
+        raw: bool,
+        config: str
+):
+    config = _configure(config)
+    fname_tmp = config['asi16_raw'] if raw else config['asi16_out']
+
+    for fn in image_files:
+        finfo = parse.parse(fname_tmp, os.path.basename(fn)).named
+        if not raw:
+            # move unprocessed to raw file structure
+            path_out = os.path.join(out_path, f"{finfo['dt']:%Y%m%d/}")
+        else:
+            # move unprocessed to a l0 file structure
+            path_out = os.path.join(out_path, f"{finfo['dt']:%Y/%m/%d/}")
+
+        fname_out_tmp = config['asi16_raw'] if not raw else config['asi16_out']
+        fname_out = fname_out_tmp.format(
+            dt=finfo["dt"],
+            shot=finfo["shot"],
+            sfx=finfo["sfx"],
+            **config
+        )
+        os.makedirs(path_out, exist_ok=True)
+        os.rename(fn, os.path.join(path_out, fname_out))
+
 def asi16_missing_dates(
         images_path: str,
         processed_path: str,
-        config: dict):
+        config: dict,
+        raw: bool = True
+):
+    fname_tmp = config['asi16_raw'] if raw else config['asi16_out']
     img_files = []
-    img_dates = []
     for p, d, f in os.walk(images_path):
         img_files += [os.path.join(p, fi) for fi in f if fi.endswith(".jpg")]
-    for fn in img_files:
-        finfo = parse.parse(config['asi16_out'], os.path.basename(fn)).named
-        img_dates.append(finfo["dt"])
-    img_dates = np.unique(img_dates)
 
     pro_files = []
-    pro_dates = []
+    pro_basenames = []
     for p, d, f in os.walk(processed_path):
         pro_files += [os.path.join(p, fi) for fi in f if fi.endswith(".bmp")]
-    for fn in pro_files:
-        finfo = parse.parse(config['asi16_out'], os.path.basename(fn)).named
-        pro_dates.append(finfo["dt"])
-    pro_dates = np.unique(pro_dates)
+        pro_basenames += [fi for fi in f if fi.endswith(".bmp")]
 
-    missing_dates = np.setdiff1d(img_dates, pro_dates, assume_unique=True)
-    return missing_dates
+    missing_processing = []
+    missing_dates = []
+    processed_images = []
+    processed_results = []
+    nw=0
+    for fn in img_files:
+        finfo = parse.parse(fname_tmp, os.path.basename(fn))
+        if finfo is None:
+            if nw < 2:
+                warnings.warn(f"{os.path.basename(fn)} can't be parsed against {fname_tmp}.")
+                nw += 1
+            if nw == 2:
+                warnings.warn(f"More warnings suppressed -  Can't parse against {fname_tmp}.")
+            continue
+        finfo = finfo.named
+        finfo.update({"sfx":"bmp"})
+        if fname_tmp.format(**finfo) not in pro_basenames:
+            missing_processing.append(fn)
+            missing_dates.append(finfo["dt"])
+        else:
+            idx = pro_basenames.index(fname_tmp.format(**finfo))
+            processed_images.append(fn)
+            processed_results.append(pro_files[idx])
+
+    return np.array(missing_dates), missing_processing, processed_images, processed_results
 
 @cli_asi16.command("status")
 @click.argument("images_path", nargs=1)
 @click.argument("processed_path", nargs=1)
 @click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
               help="Config file - will merge and override the default config.")
+@click.option("--raw/--no-raw",
+              default=True, show_default=True,
+              help="Defines the type of data to be checked on processing status.")
 def asi16_check_processed(
         images_path: str,
         processed_path: str,
-        config: str):
+        config: str,
+        raw: bool
+):
 
     config = _configure(config)
-    missing_dates = asi16_missing_dates(
+    missing_dates, _, _, _ = asi16_missing_dates(
         images_path=images_path,
         processed_path=processed_path,
-        config=config
+        config=config,
+        raw=raw
     )
     mdates, counts = np.unique(missing_dates.astype("datetime64[D]"), return_counts=True)
 
@@ -438,60 +528,103 @@ def asi16_check_processed(
     for date, count in zip(mdates,counts):
         print(f"{date}, {count:4d}")
 
-@cli_asi16.command("move2raw")
+@cli_asi16.command("move-unprocessed")
 @click.argument("images_path", nargs=1)
 @click.argument("processed_path", nargs=1)
-@click.argument("raw_path", nargs=1)
-@click.option("--shot", '-s', nargs=1,
-                default="11",
-                show_default=True,
-                help="Shot configuration id.")
+@click.argument("out_path", nargs=1)
+@click.option("--raw/--no-raw",
+              default=True, show_default=True,
+              help="Defines the type of data to be checked on processing status.")
 @click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
               help="Config file - will merge and override the default config.")
 def asi16_move_unprocessed(
         images_path: str,
         processed_path: str,
-        raw_path: str,
-        shot: int,
-        config: str):
+        out_path: str,
+        raw: bool,
+        config: str
+):
     config = _configure(config)
-    missing_dates = asi16_missing_dates(
+    fname_tmp = config['asi16_raw'] if raw else config['asi16_out']
+    missing_dates, missing_processing, _, _ = asi16_missing_dates(
         images_path=images_path,
         processed_path=processed_path,
-        config=config
+        config=config,
+        raw=raw
     )
 
-    img_files = []
-    for p, d, f in os.walk(images_path):
-        img_files += [os.path.join(p, fi) for fi in f if fi.endswith(".jpg")]
-    for fn in img_files:
-        finfo = parse.parse(config['asi16_out'], os.path.basename(fn)).named
-        if (finfo["dt"] in missing_dates) and (finfo["shot"] == shot):
-            path_raw = os.path.join(raw_path, f"{finfo['dt']:%Y%m%d/}")
-            fname_raw = config['asi16_raw'].format(
-                dt=finfo["dt"],
-                shot=finfo["shot"]
-            )
-            os.makedirs(path_raw, exist_ok=True)
-            os.rename(fn, os.path.join(path_raw, fname_raw))
+    for fn in missing_processing:
+        finfo = parse.parse(fname_tmp, os.path.basename(fn)).named
+        if not raw:
+            # move unprocessed to raw file structure
+            path_out = os.path.join(out_path, f"{finfo['dt']:%Y%m%d/}")
+        else:
+            # move unprocessed to a l0 file structure
+            path_out = os.path.join(out_path, f"{finfo['dt']:%Y/%m/%d/}")
 
-    #
-    #
-    # for date in missing_dates:
-    #     path_img = os.path.join(images_path, f"{date:%Y/%m/%d/}")
-    #     fname_img = config['asi16_out'].format(
-    #         dt=pd.to_datetime(date),
-    #         campaign=config['campaign'],
-    #         shot=shot,
-    #         sfx='jpg'
-    #     )
-    #     path_raw = os.path.join(raw_path,f"{date:%Y%m%d/}")
-    #     fname_raw = config['asi16_raw'].format(
-    #         dt=pd.to_datetime(date),
-    #         shot=shot
-    #     )
-    #     os.makedirs(path_raw, exist_ok=True)
-    #     os.rename(
-    #         os.path.join(path_img, fname_img),
-    #         os.path.join(path_raw, fname_raw)
-    #     )
+        fname_out_tmp = config['asi16_raw'] if not raw else config['asi16_out']
+        fname_out = fname_out_tmp.format(
+            dt=finfo["dt"],
+            shot=finfo["shot"],
+            sfx=finfo["sfx"],
+            **config
+        )
+        os.makedirs(path_out, exist_ok=True)
+        os.rename(fn, os.path.join(path_out, fname_out))
+
+@cli_asi16.command("move-processed")
+@click.argument("images_path", nargs=1)
+@click.argument("processed_path", nargs=1)
+@click.argument("out_path_img", nargs=1)
+@click.argument("out_path_pro", nargs=1)
+@click.option("--raw/--no-raw",
+              default=True, show_default=True,
+              help="Defines the type of data to be checked on processing status.")
+@click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
+              help="Config file - will merge and override the default config.")
+def asi16_move_processed(
+        images_path: str,
+        processed_path: str,
+        out_path_img: str,
+        out_path_pro:str,
+        raw: bool,
+        config: str
+):
+    config = _configure(config)
+    fname_tmp = config['asi16_raw'] if raw else config['asi16_out']
+    missing_dates, _, img_files, processed_files = asi16_missing_dates(
+        images_path=images_path,
+        processed_path=processed_path,
+        config=config,
+        raw=raw
+    )
+
+    for fn,fnp in zip(img_files, processed_files):
+        finfo = parse.parse(fname_tmp, os.path.basename(fn)).named
+        finfo_pro = parse.parse(fname_tmp, os.path.basename(fnp)).named
+        if not raw:
+            # move unprocessed to raw file structure
+            path_out = os.path.join(out_path_img, f"{finfo['dt']:%Y%m%d/}")
+            path_out_pro = os.path.join(out_path_pro, f"{finfo_pro['dt']:%Y%m%d/}")
+        else:
+            # move unprocessed to a l0 file structure
+            path_out = os.path.join(out_path_img, f"{finfo['dt']:%Y/%m/%d/}")
+            path_out_pro = os.path.join(out_path_pro, f"{finfo_pro['dt']:%Y/%m/%d/}")
+
+        fname_out_tmp = config['asi16_raw'] if not raw else config['asi16_out']
+        fname_out = fname_out_tmp.format(
+            dt=finfo["dt"],
+            shot=finfo["shot"],
+            sfx=finfo["sfx"],
+            **config
+        )
+        fname_out_pro = fname_out_tmp.format(
+            dt=finfo_pro["dt"],
+            shot=finfo_pro["shot"],
+            sfx=finfo_pro["sfx"],
+            **config
+        )
+        os.makedirs(path_out, exist_ok=True)
+        os.makedirs(path_out_pro, exist_ok=True)
+        os.rename(fn, os.path.join(path_out, fname_out))
+        os.rename(fnp, os.path.join(path_out_pro, fname_out_pro))
