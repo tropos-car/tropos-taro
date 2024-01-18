@@ -437,8 +437,17 @@ def asi16_move(
     config = _configure(config)
     fname_tmp = config['asi16_raw'] if raw else config['asi16_out']
 
+    nw=0
     for fn in image_files:
-        finfo = parse.parse(fname_tmp, os.path.basename(fn)).named
+        finfo = parse.parse(fname_tmp, os.path.basename(fn))
+        if finfo is None:
+            if nw < 2:
+                warnings.warn(f"{os.path.basename(fn)} can't be parsed against {fname_tmp}.")
+                nw += 1
+            if nw == 2:
+                warnings.warn(f"More warnings suppressed -  Can't parse against {fname_tmp}.")
+            continue
+        finfo = finfo.named
         if not raw:
             # move unprocessed to raw file structure
             path_out = os.path.join(out_path, f"{finfo['dt']:%Y%m%d/}")
