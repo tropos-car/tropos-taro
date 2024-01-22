@@ -16,6 +16,7 @@ import mordor.utils
 import mordor.futils
 import mordor.data
 import mordor.plot
+import mordor.keogram
 
 
 logger = logging.getLogger(__name__)
@@ -637,3 +638,107 @@ def asi16_move_processed(
         os.makedirs(path_out_pro, exist_ok=True)
         os.rename(fn, os.path.join(path_out, fname_out))
         os.rename(fnp, os.path.join(path_out_pro, fname_out_pro))
+
+
+@cli_asi16.command("keogram")
+@click.argument("images", nargs=-1)
+@click.argument("keogram_filename", nargs=1)
+@click.option("--lon",type=float, default=None, show_default=True,
+              help="Longitude coordinate (degrees East) of the image. If None, try to parse longitude from config.")
+@click.option("-r","--radius-scale",type=float,default=1.,show_default=True,
+              help="Radius ratio to crop the picture.")
+@click.option("-a","--angle-offset", type=float, default=0, show_default=True,
+              help="Static angle to rotate the picture counter-clockwise.")
+@click.option("--flip/--no-flip",help="Flip the image before rotating.")
+@click.option("--fill-color",nargs=3,default=[0,0,0],show_default=True,
+              help="Color of missing images in keogram (R,G,B).")
+@click.option("--whole-day/--no-whole-day",default=False)
+@click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
+              help="Config file - will merge and override the default config.")
+def asi16_keogram(
+        images: list,
+        keogram_filename: str,
+        lon: float,
+        radius_scale: float,
+        angle_offset: float,
+        flip: bool,
+        fill_color: list,
+        whole_day:bool,
+        config: str
+):
+    config = _configure(config)
+
+    if lon is None:
+        if config["coordinates"] is None:
+            warnings.warn("No coordinates in config - proceed with longitude=None")
+            longitude = None
+        else:
+            longitude = config["coordinates"][1]
+    else:
+        longitude = lon
+
+    img_dates = []
+    for fn in images:
+        finfo = parse.parse(config['asi16_out'], os.path.basename(fn)).named
+        img_dates.append(finfo["dt"])
+
+    keogram = mordor.keogram.make_keogram(
+        img_files=images,
+        img_dates=img_dates,
+        longitude=longitude,
+        radius_scale=radius_scale,
+        angle_offset=angle_offset,
+        flip=flip,
+        fill_color=fill_color,
+        whole_day=whole_day
+    )
+    import matplotlib as mpl
+    mpl.use('Agg')
+    fig, ax = mordor.keogram.plot_keogram(
+        keogram,
+        sdate=img_dates[0],
+        edate=img_dates[-1],
+        newfig=True
+    )
+    fig.savefig(keogram_filename, dpi=300, bbox_inches='tight')
+
+@cli_asi16.command("test-config")
+@click.argument("image", nargs=1)
+@click.option("--lon",type=float, default=None, show_default=True,
+              help="Longitude coordinate (degrees East) of the image. If None, try to parse longitude from config.")
+@click.option("-r","--radius-scale",type=float,default=1.,show_default=True,
+              help="Radius ratio to crop the picture.")
+@click.option("-a","--angle-offset", type=float, default=0, show_default=True,
+              help="Static angle to rotate the picture counter-clockwise.")
+@click.option("--flip/--no-flip",help="Flip the image before rotating.")
+@click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
+              help="Config file - will merge and override the default config.")
+def asi16_test_config(
+        image: str,
+        lon: float,
+        radius_scale: float,
+        angle_offset: float,
+        flip: bool,
+        config: str
+):
+    config = _configure(config)
+
+    if lon is None:
+        if config["coordinates"] is None:
+            warnings.warn("No coordinates in config - proceed with longitude=None")
+            longitude = None
+        else:
+            longitude = config["coordinates"][1]
+    else:
+        longitude = lon
+
+    finfo = parse.parse(config['asi16_out'], os.path.basename(image)).named
+    image_out = mordor.keogram.test_image_config(
+        img_file=image,
+        img_date=finfo["dt"],
+        longitude=longitude,
+        radius_scale=radius_scale,
+        angle_offset=angle_offset,
+        flip=flip,
+    )
+    image_out.show()
