@@ -75,10 +75,12 @@ def process():
 @process.command("l1a")
 @click.argument("input_files", nargs=-1)
 @click.argument("output_path", nargs=1)
+@click.option("--skip-exists", is_flag=True, help="Skip if output exists.")
 @click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
               help="Config file - will merge and override the default config.")
 def process_l1a(input_files,
         output_path: str,
+        skip_exists: bool,
         config: str):
     """
     Process input files (LoggerNet TOA5 ASCII Table Data) to rsd-car netcdf.
@@ -88,15 +90,6 @@ def process_l1a(input_files,
 
     with click.progressbar(input_files, label='Processing to l1a:') as files:
         for fn in files:
-            logger.info("Call mordor.data.to_l1a")
-            ds = mordor.data.to_l1a(
-               fname=fn,
-               config=config
-            )
-            if ds is None:
-                logger.warning(f"Skip {fn}.")
-                continue
-
             fname_info = parse.parse(
                 config["fname_out"],
                 os.path.basename(fn)
@@ -111,6 +104,17 @@ def process_l1a(input_files,
                                    "{dt:%Y/%m/}",
                                    config['fname_out'])
             outfile = outfile.format_map(fname_info)
+            if skip_exists and os.path.exists(outfile):
+                continue
+
+            logger.info("Call mordor.data.to_l1a")
+            ds = mordor.data.to_l1a(
+               fname=fn,
+               config=config
+            )
+            if ds is None:
+                logger.warning(f"Skip {fn}.")
+                continue
 
             mordor.futils.to_netcdf(
                 ds=ds,
@@ -121,6 +125,7 @@ def process_l1a(input_files,
 @process.command("l1b")
 @click.argument("input_files", nargs=-1)
 @click.argument("output_path", nargs=1)
+@click.option("--skip-exists", is_flag=True, help="Skip if output exists.")
 @click.option("--resolution","-r",
               default='1min', show_default=True,
               help="Time resolution of output file.")
@@ -128,6 +133,7 @@ def process_l1a(input_files,
               help="Config file - will merge and override the default config.")
 def process_l1b(input_files,
                 output_path: str,
+                skip_exists: bool,
                 resolution:str,
                 config: str):
     """
@@ -154,6 +160,23 @@ def process_l1b(input_files,
         for i, day in enumerate(days):
             ifiles = np.argwhere(indices == i).ravel()
             files = [input_files[j] for j in ifiles]
+
+            fname_info = parse.parse(
+                config["fname_out"],
+                os.path.basename(files[0])
+            ).named
+            fname_info.update({
+                "table": "complete",
+                "resolution": resolution,
+                "datalvl": "l1b",
+            })
+            outfile = os.path.join(output_path,
+                                   "{dt:%Y/%m/}",
+                                   config['fname_out'])
+            outfile = outfile.format_map(fname_info)
+            if skip_exists and os.path.exists(outfile):
+                continue
+
             ds_l1a = mordor.futils.merge_with_rename(
                 [xr.load_dataset(fn) for fn in files],
                 dim="time",
@@ -171,26 +194,6 @@ def process_l1b(input_files,
                 logger.warning(f"Skip {fn}.")
                 continue
 
-            fname_info = parse.parse(
-                config["fname_out"],
-                os.path.basename(files[0])
-            ).named
-
-            fname_info.update({
-                "table": "complete",
-                "resolution": resolution,
-                "datalvl": "l1b",
-            })
-
-            outfile = os.path.join(output_path,
-                                   "{dt:%Y/%m/}",
-                                   config['fname_out'])
-            outfile = outfile.format_map(fname_info)
-            # for key in ds:
-            #     if "time" not in ds[key].dims:
-            #         continue
-            #     print(key)
-            #     dst=ds[key]
             mordor.futils.to_netcdf(
                 ds=ds,
                 fname=outfile,
@@ -207,23 +210,18 @@ def quickook():
 @quickook.command("data")
 @click.argument("input_files", nargs=-1)
 @click.argument("output_path", nargs=1)
+@click.option("--skip-exists", is_flag=True, help="Skip if output exists.")
 @click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
               help="Config file - will merge and override the default config.")
 @click.option("--dpi", type=int, nargs=1,
               default=300, show_default=True,
               help="DPI for output png-file.")
-def ql_data(input_files, output_path, config,dpi):
+def ql_data(input_files, output_path, skip_exists, config,dpi):
     config = _configure(config)
     mordor.utils.init_logger(config)
 
     with click.progressbar(input_files, label='Make daily data quicklooks:') as files:
         for fn in files:
-            ds_l1b = xr.load_dataset(fn)
-            fig, axs = plt.subplots(2, 1, figsize=(8, 8))
-            plots = ds_l1b.quicklooks.flux(ax=axs[0])
-            pl, (ax, pax, rax) = ds_l1b.quicklooks.meteorology(ax=axs[1], legend=False)
-            ax.legend(handles=pl, loc='lower right')
-
             fname_info = parse.parse(
                 config["fname_out"],
                 os.path.basename(fn)
@@ -238,6 +236,16 @@ def ql_data(input_files, output_path, config,dpi):
                                    "{dt:%Y/%m/}",
                                    config['fname_out'])
             outfile = outfile.format_map(fname_info)
+            if skip_exists and os.path.exists(outfile):
+                continue
+
+            ds_l1b = xr.load_dataset(fn)
+            fig, axs = plt.subplots(2, 1, figsize=(8, 8))
+            plots = ds_l1b.quicklooks.flux(ax=axs[0])
+            pl, (ax, pax, rax) = ds_l1b.quicklooks.meteorology(ax=axs[1], legend=False)
+            ax.legend(handles=pl, loc='lower right')
+
+
 
             os.makedirs(os.path.dirname(outfile), exist_ok=True)
             fig.savefig(outfile, dpi=dpi)
@@ -246,30 +254,18 @@ def ql_data(input_files, output_path, config,dpi):
 @quickook.command("quality")
 @click.argument("input_files", nargs=-1)
 @click.argument("output_path", nargs=1)
+@click.option("--skip-exists", is_flag=True, help="Skip if output exists.")
 @click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
               help="Config file - will merge and override the default config.")
 @click.option("--dpi", type=int, nargs=1,
               default=300, show_default=True,
               help="DPI for output png-file.")
-def ql_quality(input_files, output_path, config, dpi):
+def ql_quality(input_files: list, output_path: str, skip_exists:bool, config: dict, dpi: int):
     config = _configure(config)
     mordor.utils.init_logger(config)
 
     with click.progressbar(input_files, label='Make daily quality quicklooks:') as files:
         for fn in files:
-            ds_l1b = xr.load_dataset(fn)
-            fig, axs = plt.subplots(3, 1, figsize=(10, 12), constrained_layout=True,
-                                    gridspec_kw={"height_ratios": [2, 1, 2]})
-
-            pl_status, (ax_s1, ax_s2) = ds_l1b.quicklooks.status(ax=axs[0])
-            ds_l1b.quicklooks.quality_range_dhi2ghi(ax=axs[1], ratio=True, kwargs={'alpha': 0.5})
-            ds_l1b.quicklooks.quality_range_shading(ax=axs[1], ratio=True, kwargs={'alpha': 0.5, 'hatch': '//'})
-            ds_l1b.quicklooks.quality_range_lwd2temp(ax=axs[1], ratio=True, kwargs={'alpha': 0.5})
-
-            axs[1].legend(bbox_to_anchor=(1, 1))
-
-            pl_flags = ds_l1b.quicklooks.quality_flags(ax=axs[2], freq='15min')
-
             fname_info = parse.parse(
                 config["fname_out"],
                 os.path.basename(fn)
@@ -284,6 +280,21 @@ def ql_quality(input_files, output_path, config, dpi):
                                    "{dt:%Y/%m/}",
                                    config['fname_out'])
             outfile = outfile.format_map(fname_info)
+            if skip_exists and os.path.exists(outfile):
+                continue
+
+            ds_l1b = xr.load_dataset(fn)
+            fig, axs = plt.subplots(3, 1, figsize=(10, 12), constrained_layout=True,
+                                    gridspec_kw={"height_ratios": [2, 1, 2]})
+
+            pl_status, (ax_s1, ax_s2) = ds_l1b.quicklooks.status(ax=axs[0])
+            ds_l1b.quicklooks.quality_range_dhi2ghi(ax=axs[1], ratio=True, kwargs={'alpha': 0.5})
+            ds_l1b.quicklooks.quality_range_shading(ax=axs[1], ratio=True, kwargs={'alpha': 0.5, 'hatch': '//'})
+            ds_l1b.quicklooks.quality_range_lwd2temp(ax=axs[1], ratio=True, kwargs={'alpha': 0.5})
+
+            axs[1].legend(bbox_to_anchor=(1, 1))
+
+            pl_flags = ds_l1b.quicklooks.quality_flags(ax=axs[2], freq='15min')
 
             os.makedirs(os.path.dirname(outfile), exist_ok=True)
             fig.savefig(outfile, dpi=dpi)
