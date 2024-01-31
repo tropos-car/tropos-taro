@@ -35,9 +35,9 @@ class SNAMES:
 def quality_control(ds, lat=None, lon=None):
     def _init_qc(ds, var):
         qc_bits = [2**i for i in range(6)]
-        ds[var + "_qc"] = ds[var].copy()
-        ds[var + "_qc"].values *= 0
-        ds[var + "_qc"].attrs.update({
+        ds[f"qc_flag_{var}"] = ds[var].copy()
+        ds[f"qc_flag_{var}"].values *= 0
+        ds[f"qc_flag_{var}"].attrs.update({
             "standard_name": "quality_flag",
             "units": "-",
             "ancillary_variables": var,
@@ -53,7 +53,7 @@ def quality_control(ds, lat=None, lon=None):
                 "comparison_to_high"
             )
         })
-        ds[var + "_qc"].encoding.update({
+        ds[f"qc_flag_{var}"].encoding.update({
             "dtype": "u1",
             "_FillValue": 0
         })
@@ -88,16 +88,16 @@ def quality_control(ds, lat=None, lon=None):
         ds = _init_qc(ds, var)
         # physical minimum
         mask = ds[var].values < -4
-        ds[var+"_qc"].values[mask] += QCCode.below_physical
+        ds[f"qc_flag_{var}"].values[mask] += QCCode.below_physical
         # physical maximum
         mask = ds[var].values > ((Sa * 1.5 * mu0 ** 1.2) + 100)
-        ds[var+"_qc"].values[mask] += QCCode.above_phyiscal
+        ds[f"qc_flag_{var}"].values[mask] += QCCode.above_phyiscal
         # rare limit minimum
         mask = ds[var].values < -2
-        ds[var + "_qc"].values[mask] += QCCode.below_rare
+        ds[f"qc_flag_{var}"].values[mask] += QCCode.below_rare
         # rare limit maximum
         mask = ds[var].values > ((Sa * 1.2 * mu0 ** 1.2) + 50)
-        ds[var + "_qc"].values[mask] += QCCode.above_rare
+        ds[f"qc_flag_{var}"].values[mask] += QCCode.above_rare
         # ratio ghi / (dni*mu0 + dhi)
         index = 1
         for dnivar in ds.filter_by_attrs(standard_name=SNAMES.dni):
@@ -117,22 +117,22 @@ def quality_control(ds, lat=None, lon=None):
                 mask_to_high *= ratio > thres_high
                 if index == 1:
                     # comparison to low
-                    ds[var + "_qc"].values[mask_to_low] += QCCode.compare_to_low
+                    ds[f"qc_flag_{var}"].values[mask_to_low] += QCCode.compare_to_low
                     # comparison to high
-                    ds[var + "_qc"].values[mask_to_high] += QCCode.compare_to_high
-                    ds[var + "_qc"].attrs.update({
+                    ds[f"qc_flag_{var}"].values[mask_to_high] += QCCode.compare_to_high
+                    ds[f"qc_flag_{var}"].attrs.update({
                         "comment": "comparison ratio GHI / (DNI*mu0 + DHI)",
-                        "ancillary_variables": ds[var + "_qc"].attrs["ancillary_variables"] + f" {dnivar} {dhivar}"
+                        "ancillary_variables": ds[f"qc_flag_{var}"].attrs["ancillary_variables"] + f" {dnivar} {dhivar}"
                     })
                 else:
-                    ds[var + f"_qc_{index}"] = ds[var+"_qc"].copy()
+                    ds[f"qc_flag_{var}_{index}"] = ds[f"qc_flag_{var}"].copy()
                     # comparison to low
-                    ds[var + f"_qc_{index}"].values[mask_to_low] += QCCode.compare_to_low
+                    ds[f"qc_flag_{var}_{index}"].values[mask_to_low] += QCCode.compare_to_low
                     # comparison to high
-                    ds[var + f"_qc_{index}"].values[mask_to_high] += QCCode.compare_to_high
-                    ds[var + f"_qc_{index}"].attrs.update({
+                    ds[f"qc_flag_{var}_{index}"].values[mask_to_high] += QCCode.compare_to_high
+                    ds[f"qc_flag_{var}_{index}"].attrs.update({
                         "comment": "comparison ratio GHI / (DNI*mu0 + DHI)",
-                        "ancillary_variables": ds[var + f"_qc_{index}"].attrs["ancillary_variables"] + f" {dnivar} {dhivar}"
+                        "ancillary_variables": ds[f"qc_flag_{var}_{index}"].attrs["ancillary_variables"] + f" {dnivar} {dhivar}"
                     })
                 index += 1
 
@@ -142,16 +142,16 @@ def quality_control(ds, lat=None, lon=None):
         ds = _init_qc(ds, var)
         # physical minimum
         mask = ds[var].values < -4
-        ds[var+"_qc"].values[mask] += QCCode.below_physical
+        ds[f"qc_flag_{var}"].values[mask] += QCCode.below_physical
         # physical maximum
         mask = ds[var].values > ((Sa * 0.95 * mu0**1.2) + 50)
-        ds[var+"_qc"].values[mask] += QCCode.above_phyiscal
+        ds[f"qc_flag_{var}"].values[mask] += QCCode.above_phyiscal
         # rare limit minimum
         mask = ds[var].values < -2
-        ds[var + "_qc"].values[mask] += QCCode.below_rare
+        ds[f"qc_flag_{var}"].values[mask] += QCCode.below_rare
         # rare limit maximum
         mask = ds[var].values > ((Sa * 0.75 * mu0 ** 1.2) + 30)
-        ds[var + "_qc"].values[mask] += QCCode.above_rare
+        ds[f"qc_flag_{var}"].values[mask] += QCCode.above_rare
         # ratio dhi / ghi
         index = 1
         for ghivar in ds.filter_by_attrs(standard_name=SNAMES.ghi):
@@ -167,22 +167,22 @@ def quality_control(ds, lat=None, lon=None):
             mask_to_high *= ratio > thres_high
             if index == 1:
                 # comparison to low
-                ds[var + "_qc"].values[mask_to_low] += QCCode.compare_to_low
+                ds[f"qc_flag_{var}"].values[mask_to_low] += QCCode.compare_to_low
                 # comparison to high
-                ds[var + "_qc"].values[mask_to_high] += QCCode.compare_to_high
-                ds[var + "_qc"].attrs.update({
+                ds[f"qc_flag_{var}"].values[mask_to_high] += QCCode.compare_to_high
+                ds[f"qc_flag_{var}"].attrs.update({
                     "comment": "comparison ratio DHI / GHI",
-                    "ancillary_variables": ds[var + "_qc"].attrs["ancillary_variables"] + f" {ghivar}"
+                    "ancillary_variables": ds[f"qc_flag_{var}"].attrs["ancillary_variables"] + f" {ghivar}"
                 })
             else:
-                ds[var + f"_qc_{index}"] = ds[var+"_qc"].copy()
+                ds[f"qc_flag_{var}_{index}"] = ds[f"qc_flag_{var}"].copy()
                 # comparison to low
-                ds[var + f"_qc_{index}"].values[mask_to_low] += QCCode.compare_to_low
+                ds[f"qc_flag_{var}_{index}"].values[mask_to_low] += QCCode.compare_to_low
                 # comparison to high
-                ds[var + f"_qc_{index}"].values[mask_to_high] += QCCode.compare_to_high
-                ds[var + f"_qc_{index}"].attrs.update({
+                ds[f"qc_flag_{var}_{index}"].values[mask_to_high] += QCCode.compare_to_high
+                ds[f"qc_flag_{var}_{index}"].attrs.update({
                     "comment": "comparison ratio DHI / GHI",
-                    "ancillary_variables": ds[var + f"_qc_{index}"].attrs["ancillary_variables"] + f" {ghivar}"
+                    "ancillary_variables": ds[f"qc_flag_{var}_{index}"].attrs["ancillary_variables"] + f" {ghivar}"
                 })
             index += 1
 
@@ -192,16 +192,16 @@ def quality_control(ds, lat=None, lon=None):
         ds = _init_qc(ds, var)
         # physical minimum
         mask = ds[var].values < -4
-        ds[var+"_qc"].values[mask] += QCCode.below_physical
+        ds[f"qc_flag_{var}"].values[mask] += QCCode.below_physical
         # physical maximum
         mask = ds[var].values > Sa
-        ds[var+"_qc"].values[mask] += QCCode.above_phyiscal
+        ds[f"qc_flag_{var}"].values[mask] += QCCode.above_phyiscal
         # rare limit minimum
         mask = ds[var].values < -2
-        ds[var + "_qc"].values[mask] += QCCode.below_rare
+        ds[f"qc_flag_{var}"].values[mask] += QCCode.below_rare
         # rare limit maximum
         mask = ds[var].values > ((Sa * 0.95 * mu0 ** 0.2) + 10)
-        ds[var + "_qc"].values[mask] += QCCode.above_rare
+        ds[f"qc_flag_{var}"].values[mask] += QCCode.above_rare
 
     # LWD
     for var in ds.filter_by_attrs(standard_name=SNAMES.lwd):
@@ -209,16 +209,16 @@ def quality_control(ds, lat=None, lon=None):
         ds = _init_qc(ds, var)
         # physical minimum
         mask = ds[var].values < 40
-        ds[var+"_qc"].values[mask] += QCCode.below_physical
+        ds[f"qc_flag_{var}"].values[mask] += QCCode.below_physical
         # physical maximum
         mask = ds[var].values > 700
-        ds[var+"_qc"].values[mask] += QCCode.above_phyiscal
+        ds[f"qc_flag_{var}"].values[mask] += QCCode.above_phyiscal
         # rare limit minimum
         mask = ds[var].values < 60
-        ds[var + "_qc"].values[mask] += QCCode.below_rare
+        ds[f"qc_flag_{var}"].values[mask] += QCCode.below_rare
         # rare limit maximum
         mask = ds[var].values > 500
-        ds[var + "_qc"].values[mask] += QCCode.above_rare
+        ds[f"qc_flag_{var}"].values[mask] += QCCode.above_rare
 
         # LWD vs Air temperature
         for tvar in ds.filter_by_attrs(standard_name=SNAMES.tair):
@@ -229,13 +229,13 @@ def quality_control(ds, lat=None, lon=None):
         thres_high = 25 + CONSTANTS.k * temp_air**4
         # comparison to low
         mask = ds[var].values < thres_low
-        ds[var + "_qc"].values[mask] += QCCode.compare_to_low
+        ds[f"qc_flag_{var}"].values[mask] += QCCode.compare_to_low
         # comparison to high
         mask = ds[var].values > thres_high
-        ds[var + "_qc"].values[mask] += QCCode.compare_to_high
-        ds[var + "_qc"].attrs.update({
+        ds[f"qc_flag_{var}"].values[mask] += QCCode.compare_to_high
+        ds[f"qc_flag_{var}"].attrs.update({
             "comment": "comparison to 5.67e-8*air_temperature**4",
-            "ancillary_variables": ds[var + "_qc"].attrs["ancillary_variables"] + f" {tvar}"
+            "ancillary_variables": ds[f"qc_flag_{var}"].attrs["ancillary_variables"] + f" {tvar}"
         })
 
     return ds
