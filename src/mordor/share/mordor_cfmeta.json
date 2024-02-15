@@ -1,11 +1,11 @@
 {
   "attributes": {
-        "title"           : "TROPOS MObile RaDiation ObseRvatory (MORDOR) observations",
+        "title"           : "TROPOS ACTRIS Radiation Observatory (TARO) observations",
         "institution"     : "Leibniz Institute for Tropospheric Research (TROPOS)",
         "department"      : "Remote Sensing of Atmospheric Processes",
         "department_team" : "Clouds, Aerosol and Radiation",
         "address"         : "Permoser Str. 15, 04318 Leipzig, Germany",
-        "source"          : "TROPOS MObile RaDiation ObseRvatory (MORDOR)",
+        "source"          : "TROPOS ACTRIS Radiation Observatory (TARO)",
         "contact_person"  : "Andreas Macke and the clouds, aerosol and radiation team of the remote sensing department, mailto:andreas.macke@tropos.de",
         "contributor_name": "{contributor_name}",
         "contributor_role": "{contributor_role}",

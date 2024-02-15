@@ -4,9 +4,9 @@
 {
   "path_sfx": "{dt:%Y/%m/}",
   "fname_raw": "{loggername}_{table}.dat",
-  "fname_out" : "mordor_{dt:%Y-%m-%d}_{campaign}_{table}_{resolution}_{datalvl}.c{collection:02d}.{sfx}",
+  "fname_out" : "{dt:%Y-%m-%d}_taro-core_{campaign}_{table}_{resolution}_{datalvl}.c{collection:02d}.{sfx}",
   "asi16_raw" : "{dt:%Y%m%d%H%M%S}_{shot}.{sfx}",
-  "asi16_out" : "asi16_{campaign}_{dt:%Y%m%d%H%M%S}_{shot}.{sfx}",
+  "asi16_out" : "{dt:%Y%m%d%H%M%S}_taro-asi16_{campaign}_{shot}.{sfx}",
   // Config Files
   "file_log": "mordor.log",
   "file_cfmeta": "share/mordor_cfmeta.json",

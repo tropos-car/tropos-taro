@@ -40,7 +40,7 @@ for %%F in (%sourceFolder%\%currentDate:~0,4%\*.WSD) do (
         if not exist "!destinationFolder!" (
             mkdir "!destinationFolder!"
         )
-        set "newFileName=wiser_!year!-!month!-!day!_!locationName!.WSD"
+        set "newFileName=!year!-!month!-!day!_taro-wiser_!locationName!.WSD"
         move "%%F" "!destinationFolder!\!newFileName!"
     )
 )
@@ -58,7 +58,7 @@ for %%F in (%sourceFolder%\%currentDate:~0,4%\*.CSV) do (
         if not exist "!destinationFolder!" (
             mkdir "!destinationFolder!"
         )
-        set "newFileName=wiser_!year!-!month!-!day!T!hour!_!locationName!.CSV"
+        set "newFileName=!year!-!month!-!day!T!hour!_taro-wiser_!locationName!.CSV"
         move "%%F" "!destinationFolder!\!newFileName!"
     )
 )
