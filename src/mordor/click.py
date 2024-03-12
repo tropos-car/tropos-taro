@@ -242,7 +242,14 @@ def ql_data(input_files, output_path, skip_exists, config,dpi):
             ds_l1b = xr.load_dataset(fn)
             fig, axs = plt.subplots(2, 1, figsize=(8, 8))
             plots = ds_l1b.quicklooks.flux(ax=axs[0])
-            pl, (ax, pax, rax) = ds_l1b.quicklooks.meteorology(ax=axs[1], legend=False)
+            axs[0].set_ylim([-10, 1310])
+            pl, (ax, pax, rax) = ds_l1b.quicklooks.meteorology(
+                ax=axs[1],
+                legend=False,
+                ylim={"tair": [15, 40],
+                      "pair": [990, 1040],
+                      "rh": None}
+            )
             ax.legend(handles=pl, loc='lower right')
 
 
@@ -293,6 +300,7 @@ def ql_quality(input_files: list, output_path: str, skip_exists:bool, config: di
             ds_l1b.quicklooks.quality_range_lwd2temp(ax=axs[1], ratio=True, kwargs={'alpha': 0.5})
 
             axs[1].legend(bbox_to_anchor=(1, 1))
+            axs[1].set_ylim([0.2, 1.6])
 
             pl_flags = ds_l1b.quicklooks.quality_flags(ax=axs[2], freq='15min')
 

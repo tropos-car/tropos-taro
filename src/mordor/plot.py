@@ -162,14 +162,22 @@ class MORDORQuicklooks:
 
     def _set_axis_lim(self, ax, nticks, ylims, base, padding):
         lims = mordor.utils.round_to(base, np.array(ylims))
-        tmax = lims[1] if lims[1] > ylims[1] else lims[1] + padding
-        tmin = lims[0] if lims[0] < ylims[0] else lims[0] - padding
+        tmax = lims[1] if lims[1] >= ylims[1] else lims[1] + padding
+        tmin = lims[0] if lims[0] <= ylims[0] else lims[0] - padding
         ax.set_ylim([tmin, tmax])
         ax.set_yticks(np.linspace(tmin, tmax, nticks))
-    def meteorology(self, ax=None, ids=None, device=False,legend=True, kwargs={}):
+    def meteorology(self, ax=None, ids=None, device=False,legend=True,ylim=None, kwargs={}):
         if ax is None:
             ax = plt.gca()
+        if ylim is None:
+            ylim = {
+                "tair": None,
+                "rh": None,
+                "pair": None
+            }
+
         plots = []
+
 
         pax = ax.twinx()
         rax = ax.twinx()
@@ -204,9 +212,18 @@ class MORDORQuicklooks:
         plots += pl
 
         # set axis limits and ticks for homogenised grid
-        self._set_axis_lim(ax, nticks=6, ylims=ax.get_ylim(), base=10, padding=5)
-        self._set_axis_lim(pax, nticks=6, ylims=pax.get_ylim(), base=10, padding=5)
-        self._set_axis_lim(rax, nticks=6, ylims=rax.get_ylim(), base=100, padding=100)
+        if ylim["tair"] is None:
+            self._set_axis_lim(ax, nticks=6, ylims=ax.get_ylim(), base=10, padding=5)
+        else:
+            self._set_axis_lim(ax, nticks=6, ylims=ylim["tair"], base=1, padding=5)
+        if ylim["pair"] is None:
+            self._set_axis_lim(pax, nticks=6, ylims=pax.get_ylim(), base=10, padding=5)
+        else:
+            self._set_axis_lim(pax, nticks=6, ylims=ylim["pair"], base=1, padding=5)
+        if ylim["rh"] is None:
+            self._set_axis_lim(rax, nticks=6, ylims=rax.get_ylim(), base=100, padding=100)
+        else:
+            self._set_axis_lim(rax, nticks=6, ylims=ylim["rh"], base=1, padding=1)
 
         ax.grid(True)
 
