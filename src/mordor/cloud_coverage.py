@@ -3,6 +3,8 @@
 # info:   Access DB, extract cloud coverage data, write to netcdf.
 # author: RHengst
 # date:   2023-11-11
+# usage: python cloud_coverage.py --configfile C:\Users\sat_data\Documents\config\config.ini.private --jsonfile C:\Users\sat_data\Documents\config\cloudiness_js_meta.json.private  --logfile C:\Users\sat_data\Documents\log\cloud_coverage.log -s 20231001 -e 20240228
+
 
 import os
 import sys
@@ -20,7 +22,7 @@ import psycopg2
 try: 
     from tropos_uv import get_config
 except:
-    print("import local get_config")
+    # print("import local get_config")
     from mordor import get_config
 
 
@@ -54,11 +56,20 @@ def execute(args, config, logger, step_startdate, step_stoppdate):
 
     cursor = conn.cursor()
     
-    "SQL Query"""
-    sql="select cloudiness, humidity, temperature, timstmp from public.eval_numeric \
-        WHERE timstmp >= '" + step_startdate.strftime("%Y-%m-%d") + "' \
-        AND timstmp < '" + step_stoppdate.strftime("%Y-%m-%d") + "' \
-        ORDER BY timstmp ASC;"
+    """SQL Query"""
+    sql="SELECT \
+	    t2.filename, \
+	    to_timestamp(substring(t2.filename,1,14),'YYYYMMDDHH24MISS')::timestamp at time zone 'UTC' AS file_created ,\
+	    substring(t2.filename,16,2) AS exposure_key,\
+        t1.cloudiness, \
+	    t1.humidity, \
+	    t1.temperature, \
+	    t1.timstmp AS evalnum_time\
+	    FROM public.eval_numeric AS t1\
+ 	        INNER JOIN public.image_list AS t2 \
+                ON t1.image_id = t2.image_id \
+	            AND t2.filename LIKE '" + step_startdate.strftime("%Y%m%d") + "%' \
+        ORDER BY t2.filename;"
 
     cursor.execute(sql)
     
@@ -73,48 +84,56 @@ def execute(args, config, logger, step_startdate, step_stoppdate):
     """Add header"""
     df.columns =[desc[0] for desc in cursor.description]
 
+    """Set exposure str 2 int"""
+    df['exposure_key'] = df['exposure_key'].astype('int')
+
+    """Separate two exposure dataframes"""
+    df11 = df[df['exposure_key'] == 11]
+    df12 = df[df['exposure_key'] == 12]
+        
+    """Write dict data to numpy array https://www.quora.com/Is-it-possible-to-convert-a-Python-set-and-dictionary-to-a-NumPy-array """
+    np_datetime_unique = np.array(list( df["file_created"].unique() ))
+    mergeddf11 = pd.merge( pd.Series(df["file_created"].unique(), name="file_created"), df11, how='outer', on='file_created')
+    mergeddf12 = pd.merge( pd.Series(df["file_created"].unique(), name="file_created"), df12, how='outer', on='file_created')
+
     """Load content of json_file to python variable cfjson"""
     cfjson=cf.read_cfjson(args.jsonfile)
 
     """Add dynamic global attributes"""
-    cfjson["attributes"]["startdate"] = str(df.iloc[0]["timstmp"])
-    cfjson["attributes"]["stoppdate"] = str(df.iloc[-1]["timstmp"])
+    cfjson["attributes"]["startdate"] = str(df.iloc[0]["file_created"])
+    cfjson["attributes"]["stoppdate"] = str(df.iloc[-1]["file_created"])
     cfjson["attributes"]["created"]   = str(datetime.date.today())
 
-    """Write dict data to numpy array https://www.quora.com/Is-it-possible-to-convert-a-Python-set-and-dictionary-to-a-NumPy-array """
-    np_datetime = np.array(list(df["timstmp"]))
 
     """Prepare time variable to store seconds since ... in netCDF-File """
-    second_since = date2num(np_datetime, cfjson['variables']['time']['attributes']['units'])
+    second_since = date2num(np_datetime_unique, cfjson['variables']['time']['attributes']['units'])
     logger.info('Processed date    : ' + step_startdate.strftime("%Y-%m-%d") )
     logger.info('Number of records : ' + str(len(second_since)) )
   
 
-    """Create dictionary for mapping the data and concatenate the variables names and location """
-    mapping_table={
-          "cloudiness":{"df":"cloudiness"},
-          "temperature":{"df":"temperature"},
-          "humidity":{"df":"humidity"},
-          "time":{"calculated":second_since}
-          }
-
     """Introduce the size of the dimensions for each case """  
-    cfjson.setDim('time', len(df["timstmp"]))
+    cfjson.setDim('time', len(second_since))
+    cfjson.setDim('exposure_key', 2)
+    
+    cfjson.setData('time', second_since)
+    cfjson.setData('exposure_key', np.array([11,12]))
    
     """Add data to the variables """
-    for netcdf_variable , mapping_table_value in mapping_table.items():
-        for attribution , local_variable in mapping_table_value.items():
-            if attribution == 'df':
-                cfjson.setData(netcdf_variable,df[local_variable])
-            elif attribution == 'calculated':
-                cfjson.setData(netcdf_variable,local_variable)
-   
+    for variable in ["cloudiness", "temperature", "humidity"]:
+        values = np.vstack((
+            mergeddf11[variable],
+            mergeddf12[variable]
+            )).T
+        cfjson.setData(variable, values)
+        
+  
    
     if not os.path.isdir( config.get('PATHFILE','PATHFILE_NETCDF') ):
         logger.warning('Output directory  not exists   : ' + config.get('PATHFILE','PATHFILE_NETCDF') )
         exit()
-
-    netcdf_path_file = config.get('PATHFILE','PATHFILE_NETCDF') + step_startdate.strftime("%Y\%m\%d") + step_startdate.strftime("\%Y%m%d") + '_cloudcoverage_asi16_oscm.nc'
+    
+    date = step_startdate
+    netcdf_path_file = config.get('PATHFILE','PATHFILE_NETCDF') + eval( config.get('PATHFILE','PATHFILE_SUBPATH_REGEX') )
 
    
     if not os.path.isdir( os.path.dirname(netcdf_path_file) ):
@@ -150,7 +169,7 @@ def adjust():
     exec_dirname = os.getcwd()
     
     """Define log_path_file + create dir"""
-    log_path_file       = os.path.join(current_dirname, 'cloud_coverage.log')
+    log_path_file       = os.path.join(exec_dirname, 'cloud_coverage.log')
     json_file           = os.path.join(current_dirname, 'conf\cloudiness_js_meta.json.template')
     default_config_file = os.path.join(current_dirname, 'conf\config.ini.template')
 
@@ -177,10 +196,7 @@ def adjust():
     if not os.path.isdir(  os.path.dirname( log_path_file ) ):
         os.makedirs( os.path.dirname( log_path_file ) )
         print('Create directory     : ' + os.path.dirname(log_path_file) )
-    if not os.path.isfile( log_path_file ):
-        print('log_path_file not exists but created: ' + log_path_file )
-
-
+    
     """Create logger with 'Cloudiness"""
     logger = logging.getLogger('cloudiness')
     logger.setLevel(logging.DEBUG)
@@ -222,10 +238,10 @@ def adjust():
     your_config_file    = args.your_config_file
 
     if not os.path.isfile( default_config_file ):
-        logger.error('default config file not exists: ' + default_config_file)
+        logger.warning('default config file not exists: ' + default_config_file)
         quit()
     if not os.path.isfile( your_config_file ):
-        logger.error('local config file not exists: ' + your_config_file)
+        logger.warning('local config file not exists: ' + your_config_file)
         quit()
 
     """Get summarised config"""
