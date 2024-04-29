@@ -28,8 +28,19 @@ def raw2daily(inpath, outpath, tables=None, config=None):
             dtype='S10',
         ).values
         # find unique days and first index
-        udays, idays = np.unique(days, return_index=True)
+        udays, idays, inv = np.unique(days, return_index=True, return_inverse=True)
         udays = pd.to_datetime(udays.astype(str))
+        # skip false values
+        false_idx = np.argwhere(np.isnan(udays)).ravel()
+        false_lines = []
+        for idx in false_idx:
+            false_lines += list(np.argwhere(inv==idx).ravel())
+        idays = idays[~np.isnan(udays)]
+        udays = udays[~np.isnan(udays)]
+
+        for l in false_lines:
+            idays[idays>l] -= 1
+
         # add header index
         idays += 4
         # append None for slicing -> slice(idays[i],idays[i+1])
@@ -38,6 +49,8 @@ def raw2daily(inpath, outpath, tables=None, config=None):
         # Retrieve header from original file
         with open(infname,'r') as txt:
             datalines = txt.readlines()
+        for l in false_lines:
+            datalines.pop(l+4)
 
         N = len(datalines)
 

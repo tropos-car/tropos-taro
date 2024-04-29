@@ -54,7 +54,7 @@ def raw2daily(input_path: str,
     """
     Moves data lines from the  continuous Loggernet files within input path (table names specified in config) to daily files in output path.
     The output path is suffixed according to config['path_sfx'] (default is '{dt:%Y/%m/}').
-    The daily output files are named according to config['fname_out'] (default is 'mordor_{dt:%Y-%m-%d}_{campaign}_{table}_{datalvl}.c{collection:02d}.{sfx}').
+    The daily output files are named according to config['fname_out'] (default is '{dt:%Y-%m-%d}_taro-core_{campaign}_{table}_{resolution}_{datalvl}.c{collection:02d}.{sfx}').
     """
     config = _configure(config)
     mordor.utils.init_logger(config)
