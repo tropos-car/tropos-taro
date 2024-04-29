@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.colors as mcolors
 import matplotlib.dates as mdates
+import matplotlib.patheffects as pe
+
 
 from mordor.qcrad import SNAMES, CONSTANTS
 import mordor.utils
@@ -490,3 +492,28 @@ class MORDORQuicklooks:
         ax.yaxis.set_tick_params(length=40, width=2, color=lcolor, right=True)
         ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(ax.xaxis.get_major_locator()))
         return pl
+
+
+def cloudfraction(cf, Nsmooth=10, ax=None):
+    if ax is None:
+        ax = plt.gca()
+
+    cf.values = cf.values * 8
+    cf.values = np.convolve(cf.values, np.ones(Nsmooth), mode='same') / Nsmooth
+    ax.fill_between(cf.time, cf, color='k')
+    ax.set_ylim([0, 8])
+    ax.set_yticks(np.arange(2, 8, 2))
+    ax.grid(True)
+    ax.tick_params(axis='x', bottom=False, labelbottom=False)
+    ax.tick_params(axis='y', direction="in", pad=-5)
+    ax.set_yticklabels(
+        ax.get_yticklabels(),
+        ha='left',
+        path_effects=[pe.withStroke(linewidth=3, foreground="w")]
+    )
+    ax.text(
+        0.05, 6 / 8, "cloud fraction (N/8)",
+        va='bottom', ha='left', transform=ax.transAxes,
+        path_effects=[pe.withStroke(linewidth=3, foreground="w")]
+    )
+    return ax

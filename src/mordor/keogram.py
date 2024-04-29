@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import matplotlib.patheffects as pe
 
 import trosat.sunpos as sp
 
@@ -120,6 +121,9 @@ def make_keogram(
 def plot_keogram(keogram_image, sdate, edate, ax=None, newfig=False):
     if newfig:
         fig, ax = plt.subplots(1, 1, figsize=(10, 6))
+    else:
+        fig = plt.gcf()
+
     if ax is None:
         ax = plt.gca()
 
@@ -130,8 +134,11 @@ def plot_keogram(keogram_image, sdate, edate, ax=None, newfig=False):
     ]
     ax.imshow(np.asarray(keogram_image), extent=extent)
     ax.axhline(keogram_image.size[1]//2, color='k', ls=':')
-    ax.text(np.datetime64(sdate), keogram_image.size[1]//2, "zenith",
-            va='center', ha='right', rotation=90)
+    ax.text(
+        0.01, 0.51, "zenith",
+        va='bottom', ha='left', transform=ax.transAxes,
+        path_effects=[pe.withStroke(linewidth=3, foreground="w")]
+    )
     ax.set_aspect('auto')
     ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(ax.xaxis.get_major_locator()))
     ax.set_xlabel("time (UTC)")

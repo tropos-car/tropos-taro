@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 import datetime as dt
 import importlib.resources
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 import mordor
@@ -255,7 +256,7 @@ def ql_data(input_files, output_path, skip_exists, config,dpi):
 
 
             os.makedirs(os.path.dirname(outfile), exist_ok=True)
-            fig.savefig(outfile, dpi=dpi)
+            fig.savefig(outfile, dpi=dpi, bbox_inches='tight')
             plt.close(fig)
 
 @quickook.command("quality")
@@ -305,7 +306,7 @@ def ql_quality(input_files: list, output_path: str, skip_exists:bool, config: di
             pl_flags = ds_l1b.quicklooks.quality_flags(ax=axs[2], freq='15min')
 
             os.makedirs(os.path.dirname(outfile), exist_ok=True)
-            fig.savefig(outfile, dpi=dpi)
+            fig.savefig(outfile, dpi=dpi, bbox_inches='tight')
             plt.close(fig)
 
 ###########################
@@ -662,6 +663,8 @@ def asi16_move_processed(
 @cli_asi16.command("keogram")
 @click.argument("images", nargs=-1)
 @click.argument("keogram_filename", nargs=1)
+@click.option("--cffile", type=str, default=None, show_default=True,
+              help="Filename of cloudiness file.")
 @click.option("--lon",type=float, default=None, show_default=True,
               help="Longitude coordinate (degrees East) of the image. If None, try to parse longitude from config.")
 @click.option("-r","--radius-scale",type=float,default=1.,show_default=True,
@@ -677,6 +680,7 @@ def asi16_move_processed(
 def asi16_keogram(
         images: list,
         keogram_filename: str,
+        cffile: str,
         lon: float,
         radius_scale: float,
         angle_offset: float,
@@ -711,13 +715,26 @@ def asi16_keogram(
         fill_color=fill_color,
         whole_day=whole_day
     )
-    import matplotlib as mpl
+
+    if cffile is not None:
+        dscf = xr.load_dataset(cffile)
+        cf = dscf.cloudiness.mean(dim="exposure_key", skipna=True).squeeze()
+
     mpl.use('Agg')
-    fig, ax = mordor.keogram.plot_keogram(
+    if cffile is not None:
+        fig = plt.figure(figsize=(10, 7))
+        gs = fig.add_gridspec(nrows=7, ncols=1, wspace=0, hspace=0.05)
+        ax_keo = fig.add_subplot(gs[1:, 0])
+        ax_cf = fig.add_subplot(gs[0, 0], sharex=ax_keo)
+        ax_cf = mordor.plot.cloudfraction(cf, Nsmooth=10, ax=ax_cf)
+    else:
+        fig, ax_keo = plt.subplots(1,1, figsize=(10, 6))
+
+    fig, ax_keo = mordor.keogram.plot_keogram(
         keogram,
         sdate=img_dates[0],
         edate=img_dates[-1],
-        newfig=True
+        ax=ax_keo
     )
     fig.savefig(keogram_filename, dpi=300, bbox_inches='tight')
 
