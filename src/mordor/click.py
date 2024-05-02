@@ -667,6 +667,8 @@ def asi16_move_processed(
               help="Filename of cloudiness file.")
 @click.option("--lon",type=float, default=None, show_default=True,
               help="Longitude coordinate (degrees East) of the image. If None, try to parse longitude from config.")
+@click.option("--lat",type=float, default=None, show_default=True,
+              help="Latitude coordinate (degrees North) of the image. If None, try to parse latitude from config.")
 @click.option("-r","--radius-scale",type=float,default=1.,show_default=True,
               help="Radius ratio to crop the picture.")
 @click.option("-a","--angle-offset", type=float, default=0, show_default=True,
@@ -682,6 +684,7 @@ def asi16_keogram(
         keogram_filename: str,
         cffile: str,
         lon: float,
+        lat: float,
         radius_scale: float,
         angle_offset: float,
         flip: bool,
@@ -699,6 +702,15 @@ def asi16_keogram(
             longitude = config["coordinates"][1]
     else:
         longitude = lon
+
+    if lat is None:
+        if config["coordinates"] is None:
+            warnings.warn("No coordinates in config - proceed with latitude=None")
+            latitude = None
+        else:
+            latitude = config["coordinates"][0]
+    else:
+        latitude = lat
 
     img_dates = []
     for fn in images:
@@ -742,6 +754,8 @@ def asi16_keogram(
 @click.argument("image", nargs=1)
 @click.option("--lon",type=float, default=None, show_default=True,
               help="Longitude coordinate (degrees East) of the image. If None, try to parse longitude from config.")
+@click.option("--lat",type=float, default=None, show_default=True,
+              help="Latitude coordinate (degrees North) of the image. If None, try to parse latitude from config.")
 @click.option("-r","--radius-scale",type=float,default=1.,show_default=True,
               help="Radius ratio to crop the picture.")
 @click.option("-a","--angle-offset", type=float, default=0, show_default=True,
@@ -752,6 +766,7 @@ def asi16_keogram(
 def asi16_test_config(
         image: str,
         lon: float,
+        lat: float,
         radius_scale: float,
         angle_offset: float,
         flip: bool,
@@ -768,11 +783,21 @@ def asi16_test_config(
     else:
         longitude = lon
 
+    if lat is None:
+        if config["coordinates"] is None:
+            warnings.warn("No coordinates in config - proceed with latitude=None")
+            latitude = None
+        else:
+            latitude = config["coordinates"][0]
+    else:
+        latitude = lat
+
     finfo = parse.parse(config['asi16_out'], os.path.basename(image)).named
     image_out = mordor.keogram.test_image_config(
         img_file=image,
         img_date=finfo["dt"],
         longitude=longitude,
+        latitude=latitude,
         radius_scale=radius_scale,
         angle_offset=angle_offset,
         flip=flip,

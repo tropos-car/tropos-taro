@@ -34,6 +34,7 @@ def test_image_config(
     img_file,
     img_date,
     longitude=None,
+    latitude=None,
     radius_scale=1,
     angle_offset=0,
     flip=False
@@ -55,7 +56,7 @@ def test_image_config(
             cimage = cimage.transpose(Image.FLIP_LEFT_RIGHT)
 
         # rotate into the sun
-        hangle = sp.hour_angle(img_date, lon=longitude, units=sp.units.DEG)
+        _, hangle = sp.sun_angles(img_date, lat=latitude, lon=longitude, units=sp.units.DEG)
         image_out = cimage.rotate(angle_offset + hangle)
     return image_out
 
@@ -63,6 +64,7 @@ def make_keogram(
     img_files,
     img_dates,
     longitude=None,
+    latitude=None,
     radius_scale=1,
     angle_offset=0,
     flip=False,
@@ -104,7 +106,7 @@ def make_keogram(
                 cimage = cimage.transpose(Image.FLIP_LEFT_RIGHT)
 
             # rotate into the sun
-            hangle = sp.hour_angle(dt, lon=longitude, units=sp.units.DEG)
+            _, hangle = sp.sun_angles(dt, lat=latitude, lon=longitude, units=sp.units.DEG)
             cimage = cimage.rotate(angle_offset + hangle)
 
             # crop to slice
