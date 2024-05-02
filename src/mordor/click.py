@@ -721,6 +721,7 @@ def asi16_keogram(
         img_files=images,
         img_dates=img_dates,
         longitude=longitude,
+        latitude=latitude,
         radius_scale=radius_scale,
         angle_offset=angle_offset,
         flip=flip,
