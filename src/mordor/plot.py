@@ -413,6 +413,10 @@ class MORDORQuicklooks:
         tair = self._filter_device(standard_names=[SNAMES.tair], ids=ids)
         for var in tair:
             tair[var].values = (tair[var].values * Unit(tair[var].attrs['units'])).to("K").value
+        if len(tair) == 0:
+            pl = ax.plot([np.nan], [np.nan], label="")
+            return pl
+
         tair = tair.to_array(dim='new').mean("new", skipna=True)
 
         lwd0 = CONSTANTS.k * tair**4
