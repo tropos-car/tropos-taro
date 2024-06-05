@@ -221,21 +221,28 @@ def quality_control(ds, lat=None, lon=None):
         ds[f"qc_flag_{var}"].values[mask] += QCCode.above_rare
 
         # LWD vs Air temperature
+        temp_air = False
         for tvar in ds.filter_by_attrs(standard_name=SNAMES.tair):
             temp_air = ds[tvar].values * Unit(ds[tvar].attrs['units'])
             break
-        temp_air = (temp_air.to('K')).value
-        thres_low = 0.4 * CONSTANTS.k * temp_air**4
-        thres_high = 25 + CONSTANTS.k * temp_air**4
-        # comparison to low
-        mask = ds[var].values < thres_low
-        ds[f"qc_flag_{var}"].values[mask] += QCCode.compare_to_low
-        # comparison to high
-        mask = ds[var].values > thres_high
-        ds[f"qc_flag_{var}"].values[mask] += QCCode.compare_to_high
-        ds[f"qc_flag_{var}"].attrs.update({
-            "comment": "comparison to 5.67e-8*air_temperature**4",
-            "ancillary_variables": ds[f"qc_flag_{var}"].attrs["ancillary_variables"] + f" {tvar}"
-        })
-
+        if temp_air:
+            temp_air = (temp_air.to('K')).value
+            thres_low = 0.4 * CONSTANTS.k * temp_air**4
+            thres_high = 25 + CONSTANTS.k * temp_air**4
+            # comparison to low
+            mask = ds[var].values < thres_low
+            ds[f"qc_flag_{var}"].values[mask] += QCCode.compare_to_low
+            # comparison to high
+            mask = ds[var].values > thres_high
+            ds[f"qc_flag_{var}"].values[mask] += QCCode.compare_to_high
+            ds[f"qc_flag_{var}"].attrs.update({
+                "comment": "comparison to 5.67e-8*air_temperature**4",
+                "ancillary_variables": ds[f"qc_flag_{var}"].attrs["ancillary_variables"] + f" {tvar}"
+            })
+        else:
+            ds[f"qc_flag_{var}"].values += QCCode.compare_to_low
+            ds[f"qc_flag_{var}"].values += QCCode.compare_to_high
+            ds[f"qc_flag_{var}"].attrs.update({
+                "comment": "error: air temperature not available",
+            })
     return ds

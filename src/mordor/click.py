@@ -185,7 +185,7 @@ def process_l1b(input_files,
             )
             ds_l1a = ds_l1a.interpolate_na('time')
 
-            logger.info("Call mordor.data.to_l1a")
+            logger.info("Call mordor.data.to_l1b")
             ds = mordor.data.to_l1b(
                 ds_l1a,
                 resolution=resolution,
