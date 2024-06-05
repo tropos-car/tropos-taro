@@ -109,6 +109,11 @@ class MORDORQuicklooks:
             cmap = getattr(CMAPS, key)
             label = getattr(LABELS, key)
 
+        # if variable not available:
+        if len(dsp) == 0:
+            pl, = ax.plot([np.nan], [np.nan], label='', **kwargs)
+            return [pl]
+
         if freq is not None:
             dsp = mordor.futils.resample(dsp, freq=freq)
 
