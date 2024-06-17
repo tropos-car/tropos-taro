@@ -3,6 +3,7 @@ import re
 import xarray as xr
 import pandas as pd
 import numpy as np
+import datetime as dt
 import parse
 import logging
 from unitpy import Unit
@@ -303,3 +304,119 @@ def to_l1b(ds_l1a, resolution, *, config=None):
     ds_l1b = mordor.futils.add_encoding(ds_l1b, vencode=vencode)
 
     return ds_l1b
+
+
+def wiser_to_l1a(date, pf, *, config=None, global_attrs=None):
+    # load config and nc config
+    config = mordor.utils.merge_config(config)
+    gattrs, vattrs, vencode = mordor.futils.get_cfmeta(config)
+
+    if global_attrs is not None:
+        gattrs.update(global_attrs)
+
+    # load raw data
+    date = pd.to_datetime(date)
+    datetime = dt.datetime(date.year, date.month, date.day, 0, 0, 0)
+    fname = os.path.join(pf, config['wiser_raw'])
+
+    new = True
+    for hour in np.arange(24):
+        try:
+            df = pd.read_csv(fname.format(
+                dt=datetime + dt.timedelta(hours=int(hour)),
+                campaign=config["campaign"],
+                sfx='CSV'
+            ))
+        except Exception as error:
+            # handle the exception
+            print("An exception occurred:", error)
+            continue
+
+        df.pop(df.columns[-1])
+        time = (f"{datetime:%Y-%m-%d}T" + df.head(1).astype(str)).values[0, 1::3].astype("datetime64[ns]")
+        wvls = df.values[7:, 0].astype(float)  # [nm]
+        values_711 = (df.values[7:, 1::3].astype(float).T) * 1e-3  # [W m-2 nm-1]
+        values_713 = (df.values[7:, 2::3].astype(float).T) * 1e-3  # [W m-2 nm-1]
+        values_merge = (df.values[7:, 3::3].astype(float).T) * 1e-3  # [W m-2 nm-1]
+        exposure_711 = df.values[3, 1::3].astype(float)  # [ms]
+        exposure_713 = df.values[3, 2::3].astype(float)  # [ms]
+        temp_711 = df.values[4, 1::3].astype(float)  # [degC]
+        temp_713 = df.values[4, 2::3].astype(float)  # [degC]
+        pwr_711 = df.values[5, 1::3].astype(float)  # [V]
+        pwr_713 = df.values[5, 2::3].astype(float)  # [V]
+        dst = xr.Dataset(
+            {
+                "dflx_sp_711": (("time", "wvl"), values_711),
+                "dflx_sp_713": (("time", "wvl"), values_713),
+                "dflx_sp_wiser": (("time", "wvl"), values_merge),
+                "sensor_exposure_711": ("time", exposure_711),
+                "sensor_exposure_713": ("time", exposure_713),
+                "sensor_temperature_711": ("time", temp_711),
+                "sensor_temperature_713": ("time", temp_713),
+                "sensor_power_711": ("time", pwr_711),
+                "sensor_power_713": ("time", pwr_713)
+            },
+            coords={
+                "time": ("time", time),
+                "wvl": ("wvl", wvls),
+            }
+        )
+
+        if new:
+            ds = dst.copy()
+            new = False
+        else:
+            ds = xr.concat((ds, dst), dim='time')
+
+    if new:
+        return None
+
+    # add meta
+    for var in ds.variables:
+        if (var == "time") or (var == "wvl") or (var.endswith("wiser")):
+            continue
+        i = 0 if var.endswith("711") else 1
+
+        meta = mordor.utils.meta_lookup(config, troposID=config["wiser_ids"][i])
+        # drop calibration meta
+        meta = keyfilter(lambda x: not x.startswith('calibration'), meta)
+        # drop None values
+        meta = valfilter(lambda x: x is not None, meta)
+        # update netcdf attributes
+        ds[var].attrs.update(meta)
+
+    # add coordinats if available in config
+    if config["coordinates"] is not None:
+        lat, lon, alt = config["coordinates"]
+        if lat is not None:
+            ds["lat"] = lat
+        if lon is not None:
+            ds["lon"] = lon
+        if alt is not None:
+            ds["altitude"] = alt
+
+    # add global meta data
+    now = pd.to_datetime(np.datetime64("now"))
+    gattrs.update({
+        'processing_level': 'l1a',
+        'product_version': mordor.__version__,
+        'history': f'{now.isoformat()}: Generated level l1a  by mordor version {mordor.__version__}; ',
+    })
+    ds.attrs.update(gattrs)
+
+    # drop occurrence of duplicate sample values
+    ds = ds.drop_duplicates("time")
+
+    # add global coverage attributes
+    ds = mordor.futils.update_coverage_meta(ds, timevar="time")
+
+    # add attributes to Dataset
+    for k, v in vattrs.items():
+        # iterate over suffixed variables
+        for ki in [key for key in ds if key.startswith(k)]:
+            ds[ki].attrs.update(v)
+
+    # add encoding to Dataset
+    ds = mordor.futils.add_encoding(ds, vencode)
+
+    return ds

@@ -804,3 +804,65 @@ def asi16_test_config(
         flip=flip,
     )
     image_out.show()
+
+
+@click.version_option()
+@click.group("wiser")
+def cli_wiser():
+    pass
+
+@cli_wiser.command("l1a")
+@click.argument("input_files", nargs=-1)
+@click.argument("output_path", nargs=1)
+@click.option("--skip-exists", is_flag=True, help="Skip if output exists.")
+@click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
+              help="Config file - will merge and override the default config.")
+def process_l1a(input_files,
+        output_path: str,
+        skip_exists: bool,
+        config: str):
+    """
+    Process input files to rsd-car netcdf.
+    """
+    config = _configure(config)
+    mordor.utils.init_logger(config)
+
+    dates = []
+    pfs = []
+    for fn in input_files:
+        fname_info = parse.parse(
+            config["wiser_raw"],
+            os.path.basename(fn)
+        ).named
+        pfs.append(os.path.dirname(fn))
+        dates.append(fname_info["dt"])
+    dates, idx = np.unique(dates.astype("datetime64[D]"), return_index=True)
+    pfs = np.array(pfs)[idx]
+
+    with click.progressbar(np.arange(len(dates)), label='Processing wiser l0 to l1a:') as idxs:
+        for i in idxs:
+            date = dates[i]
+            pf = pfs[i]
+
+            fname_info = {
+                "dt": date, "campaign": config["campaign"], "sfx": "nc"
+            }
+            outfile = os.path.join(output_path,
+                                   "{dt:%Y/%m/}",
+                                   config['wiser_out'])
+            outfile = outfile.format_map(fname_info)
+            if skip_exists and os.path.exists(outfile):
+                continue
+
+            logger.info("Call mordor.data.wiser_to_l1a")
+            ds = mordor.data.wiser_to_l1a(date=date, pf=pf, config=config)
+
+            if ds is None:
+                logger.warning(f"Skip {fn}.")
+                continue
+
+            mordor.futils.to_netcdf(
+                ds=ds,
+                fname=outfile,
+                timevar="time"
+            )
