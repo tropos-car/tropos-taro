@@ -817,7 +817,7 @@ def cli_wiser():
 @click.option("--skip-exists", is_flag=True, help="Skip if output exists.")
 @click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
               help="Config file - will merge and override the default config.")
-def process_l1a(input_files,
+def wiser_l1a(input_files,
         output_path: str,
         skip_exists: bool,
         config: str):
@@ -876,7 +876,7 @@ def process_l1a(input_files,
 @click.option("--dpi", type=int, nargs=1,
               default=300, show_default=True,
               help="DPI for output png-file.")
-def process_l1a(input_files,
+def wiser_quicklook(input_files,
         output_path: str,
         skip_exists: bool,
         config: str,
