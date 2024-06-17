@@ -7,6 +7,8 @@
   "fname_out" : "{dt:%Y-%m-%d}_taro-core_{campaign}_{table}_{resolution}_{datalvl}.c{collection:02d}.{sfx}",
   "asi16_raw" : "{dt:%Y%m%d%H%M%S}_{shot}.{sfx}",
   "asi16_out" : "{dt:%Y%m%d%H%M%S}_taro-asi16_{campaign}_{shot}.{sfx}",
+  "wiser_raw" : "{dt:%Y-%m-%dT%H}_taro-wiser_{campaign}.{sfx}",
+  "wiser_out" : "{dt:%Y-%m-%d}_taro-wiser_{campaign}.{sfx}",
   // Config Files
   "file_log": "mordor.log",
   "file_cfmeta": "share/mordor_cfmeta.json",
@@ -23,6 +25,8 @@
   "coordinates": null, // null or [latitude (degN), longitude (degE), altitude (m)]
   // asi16 config
   "asi16_id": "", // Tropos ID of ASI-16 camera
+  // wiser config
+  "wiser_ids": ["", ""], // Tropos-IDs of [EKO-711, EKO-713]
   // to_l1a config
   "logger_name": "CR1000X", // Loggernet - Loggername
   // to_l1b config
