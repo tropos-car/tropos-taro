@@ -56,8 +56,8 @@
         "units": "ms",
         "long_name": "sensor exposure",
         "standard_name": "exposure_of_sensor",
-        "scale_factor": 0,
-        "add_offset": 1,
+        "scale_factor": 1,
+        "add_offset": 0,
         "_FillValue": 65535,
         "valid_range": [
           0,
@@ -73,7 +73,7 @@
         "long_name": "sensor power",
         "standard_name": "power_of_sensor",
         "scale_factor": 0.01,
-        "add_offset": 1,
+        "add_offset": 0,
         "_FillValue": 65535,
         "valid_range": [
           0,
@@ -251,7 +251,7 @@
         "standard_name": "surface_downwelling_spectral_radiative_flux_in_air",
         "units": "W m-2 nm-1",
         "scale_factor": 5e-7,
-        "add_offset": 0,
+        "add_offset": -0.2,
         "valid_range": [
           0,
           4000000000

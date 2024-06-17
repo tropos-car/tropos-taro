@@ -834,14 +834,14 @@ def process_l1a(input_files,
             config["wiser_raw"],
             os.path.basename(fn)
         ).named
-        pfs.append(os.path.dirname(fn))
-        dates.append(fname_info["dt"])
-    dates, idx = np.unique(dates.astype("datetime64[D]"), return_index=True)
+        pfs.append(os.path.dirname(os.path.abspath(fn)))
+        dates.append(np.datetime64(fname_info["dt"]))
+    dates, idx = np.unique(np.array(dates).astype("datetime64[D]"), return_index=True)
     pfs = np.array(pfs)[idx]
-
+    print(dates)
     with click.progressbar(np.arange(len(dates)), label='Processing wiser l0 to l1a:') as idxs:
         for i in idxs:
-            date = dates[i]
+            date = pd.to_datetime(dates[i])
             pf = pfs[i]
 
             fname_info = {
@@ -866,3 +866,48 @@ def process_l1a(input_files,
                 fname=outfile,
                 timevar="time"
             )
+
+@cli_wiser.command("quicklook")
+@click.argument("input_files", nargs=-1)
+@click.argument("output_path", nargs=1)
+@click.option("--skip-exists", is_flag=True, help="Skip if output exists.")
+@click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
+              help="Config file - will merge and override the default config.")
+@click.option("--dpi", type=int, nargs=1,
+              default=300, show_default=True,
+              help="DPI for output png-file.")
+def process_l1a(input_files,
+        output_path: str,
+        skip_exists: bool,
+        config: str,
+        dpi:int):
+    """
+    Make wiser quicklooks.
+    """
+    config = _configure(config)
+    mordor.utils.init_logger(config)
+
+    with click.progressbar(input_files, label='Make daily data quicklooks:') as files:
+        for fn in files:
+            fname_info = parse.parse(
+                config["wiser_out"],
+                os.path.basename(fn)
+            ).named
+
+            fname_info.update({
+                "sfx": "png"
+            })
+
+            outfile = os.path.join(output_path,
+                                   "{dt:%Y/%m/}",
+                                   config['wiser_out'])
+            outfile = outfile.format_map(fname_info)
+            if skip_exists and os.path.exists(outfile):
+                continue
+
+            ds = xr.load_dataset(fn)
+            fig,axs = mordor.plot.wiser_quicklook(ds)
+
+            os.makedirs(os.path.dirname(outfile), exist_ok=True)
+            fig.savefig(outfile, dpi=dpi, bbox_inches='tight')
+            plt.close(fig)
