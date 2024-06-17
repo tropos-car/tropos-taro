@@ -278,8 +278,6 @@ def add_encoding(ds, vencode=None):
 
     # add encoding to Dataset
     for k, v in vencode.items():
-        if k not in ds.keys():
-            continue
         for ki in [key for key in ds if key.startswith(k)]:
             ds[ki].encoding = v
         if "valid_range" not in vencode[k]:
