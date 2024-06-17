@@ -330,7 +330,7 @@ def wiser_to_l1a(date, pf, *, config=None, global_attrs=None):
         except Exception as error:
             # handle the exception
             print("An exception occurred:", error)
-            logger.error("An exception occurred: " + error)
+            logger.error("An exception occurred: " + str(error))
             continue
 
         df.pop(df.columns[-1])
@@ -339,7 +339,7 @@ def wiser_to_l1a(date, pf, *, config=None, global_attrs=None):
         except Exception as error:
             # handle the exception
             print("An exception occurred:", error)
-            logger.error("An exception occurred: " + error)
+            logger.error("An exception occurred: " + str(error))
             continue
         wvls = df.values[7:, 0].astype(float)  # [nm]
         values_711 = (df.values[7:, 1::3].astype(float).T) * 1e-3  # [W m-2 nm-1]
