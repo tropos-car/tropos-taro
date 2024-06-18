@@ -537,16 +537,21 @@ def wiser_quicklook(ds):
     val = ds.dflx_sp_wiser.values
     val[np.isnan(val)] = 0
     val[val < 1e-3] = 0
+    val[val > 1e2] = 0
 
-    axs[1, 1].plot(ds.dflx_sp_wiser.mean(dim='time', skipna=True), ds.wvl / 1000, color='k')
+    nval = ds.dflx_sp_wiser.mean(dim='time', skipna=True)
+    nval = nval / np.max(nval)
+
+    axs[1, 1].plot(nval, ds.wvl / 1000, color='k')
     pcm = axs[1, 0].contourf(
         ds.time, ds.wvl / 1000, val.T,
-        levels=[1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1, 1, 5, 1e1],
+        levels=[1e-3, 25e-4, 5e-3, 75e-4, 1e-2, 25e-3, 5e-2, 75e-3, 1e-1, 25e-2, 5e-1, 75e-2, 1, 2.5, 5],
         cmap="cividis",
         norm=mcolors.LogNorm(vmin=1e-3, vmax=10)
     )
     axs[0, 0].plot(ds.time, np.trapz(val.T, ds.wvl, axis=0), color='k')
-    axs[0, 0].set_ylim((0, 1300))
+    axs[0, 0].set_ylim((-10, 1300))
+    axs[1, 1].set_xlim((axs[1, 1].get_xlim()[0], 1.05))
     axs[1, 0].set_xlim((ds.time.values[0].astype("datetime64[D]"),
                         ds.time.values[0].astype("datetime64[D]") + np.timedelta64(23 * 60 + 59, 'm')))
     axs[1, 0].set_xlabel("time (UTC)")
@@ -557,17 +562,18 @@ def wiser_quicklook(ds):
         mpatches.Rectangle(xy=(0.02, 0.07), width=0.15, height=0.9, facecolor='w', edgecolor='k', alpha=0.7,
                            transform=axs[1, 0].transAxes))
     cbaxes = axs[1, 0].inset_axes(bounds=[0.1, 0.1, 0.03, 0.8])
-    fig.colorbar(
+    cbar = fig.colorbar(
         pcm, cax=cbaxes, pad=0, extend='max',
-        ticks=[1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1, 1, 5, 1e1]
+        ticks=[1e-3, 25e-4, 5e-3, 75e-4, 1e-2, 25e-3, 5e-2, 75e-3, 1e-1, 25e-2, 5e-1, 75e-2, 1, 2.5, 5]
     )
+    cbar.set_ticklabels([1e-3, "", 5e-3, "", 1e-2, "", 5e-2, "", 1e-1, "", 5e-1, "", 1, "", 5])
     cbaxes.set_ylabel("spectral flux (W m-2 nm-1)")
     cbaxes.tick_params("y", left=True, right=False, labelleft=True, labelright=False)
     # Ax00 title
     axs[0, 0].text(0.02, 0.92, "broadband solar irradiance\n (W m-2)", transform=axs[0, 0].transAxes, va='top',
                    ha='left')
     # Ax00 title
-    axs[1, 1].text(0.92, 0.97, "mean spectral flux\n (W m-2 nm-1)", transform=axs[1, 1].transAxes, va='top', ha='left',
+    axs[1, 1].text(0.92, 0.97, "normed mean spectral flux", transform=axs[1, 1].transAxes, va='top', ha='left',
                    rotation=-90, rotation_mode='anchor')
 
     for ax in axs.flatten():
@@ -577,4 +583,4 @@ def wiser_quicklook(ds):
 
     fig.subplots_adjust(wspace=0, hspace=0)
     axs[1, 0].xaxis.set_major_formatter(mdates.ConciseDateFormatter(axs[1, 0].xaxis.get_major_locator()))
-    return fig,axs
+    return fig, axs
