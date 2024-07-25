@@ -16,7 +16,7 @@
     "device": "All sky imager ASI-16, Eko Instruments",
     "station": "spare"
   },
-  // MORDOR 1
+  // TARO-Mobile (MORDOR 1)
   "A201200136": {
     "serial": "S11122.07",
     "device": "Suntracker STR-22G, Eko Instruments",
@@ -77,7 +77,7 @@
     "device": "Pyranometer ML-020-VM, Eko Instruments",
     "station": "MORDOR 1"
   },
-  // MORDOR 2 (Lacros)
+  // TARO-LACROS
   "S17139313": {
     "serial": "S17139313",
     "device": "Pyranometer ML-01, Eko Instruments",
@@ -118,53 +118,53 @@
     "device": "Pyrgeometer CGR4 PT100, Kipp & Zonen",
     "station": "TARO-LACROS"
   },
-  // MORDOR 3 (Melpitz)
+  // TARO-3 (Melpitz-Spare)
   "A201800102": {
     "serial": "6216",
     "device": "Logger CR1000X, Campbell Sci.",
-    "station": "MORDOR 3 (Melpitz)"
+    "station": "TARO 3 (Melpitz-Spare)"
   },
   "A201800103": {
     "serial": "533.1118.0812.227",
     "device": "Weather station WS-300, Lufft",
-    "station": "MORDOR 3 (Melpitz)"
+    "station": "TARO 3 (Melpitz-Spare)"
   },
   "A201800108": {
     "serial": "180046",
     "device": "Pyrgeometer SGR4V, Kipp & Zonen",
-    "station": "MORDOR 3 (Melpitz)"
+    "station": "TARO 3 (Melpitz-Spare)"
   },
   "A201800109": {
     "serial": "190050",
     "device": "Pyrgeometer SGR4V, Kipp & Zonen",
-    "station": "MORDOR 3 (Melpitz)"
+    "station": "TARO 3 (Melpitz-Spare)"
   },
   "A201900001": {
     "serial": "S18029.07",
     "device": "Suntracker STR-22G, Eko Instruments",
-    "station": "MORDOR 3 (Melpitz)"
+    "station": "TARO 3 (Melpitz-Spare)"
   },
   "A201900002": {
     "serial": "S18030163",
     "device": "Pyranometer MS-80, Eko Instruments",
-    "station": "MORDOR 3 (Melpitz)"
+    "station": "TARO 3 (Melpitz-Spare)"
   },
   "A201900003": {
     "serial": "S18030164",
     "device": "Pyranometer MS-80, Eko Instruments",
-    "station": "MORDOR 3 (Melpitz)"
+    "station": "TARO 3 (Melpitz-Spare)"
   },
   "A201900004": {
     "serial": "S18030166",
     "device": "Pyranometer MS-80, Eko Instruments",
-    "station": "MORDOR 3 (Melpitz)"
+    "station": "TARO 3 (Melpitz-Spare)"
   },
   "A201900005": {
     "serial": "S18015.02",
     "device": "Pyrheliometer MS-57, Eko Instruments",
-    "station": "MORDOR 3 (Melpitz)"
+    "station": "TARO 3 (Melpitz-Spare)"
   },
-  // MORDOR 4 (Cape Verde)
+  // TARO-OSCM (Cape Verde)
   "A202200090": {
     "serial": "40031",
     "device": "Logger CR1000X, Campbell Sci.",
@@ -215,7 +215,7 @@
     "device": "Spectrometer MS-713, Eko Instruments",
     "station": "TARO-OSCM (Cape Verde)"
   },
-  // MORDOR 5 -> TARO-Melpitz
+  // TARO-Melpitz
   "A202200091": {
     "serial": "40032",
     "device": "Logger CR1000X, Campbell Sci.",
@@ -229,6 +229,31 @@
   "A202200070": {
     "serial": "16298",
     "device": "All sky imager ASI-16, Eko Instruments",
+    "station": "TARO-Melpitz"
+  },
+  "A202400058": {
+    "serial": "S23009.15",
+    "device": "Suntracker STR-22G, Eko Instruments",
+    "station": "TARO-Melpitz"
+  },
+  "A202400059": {
+    "serial": "S23083027",
+    "device": "Pyranometer MS-80, Eko Instruments",
+    "station": "TARO-Melpitz"
+  },
+  "A202400060": {
+    "serial": "S23083028",
+    "device": "Pyranometer MS-80, Eko Instruments",
+    "station": "TARO-Melpitz"
+  },
+  "A202400061": {
+    "serial": "S22037.37",
+    "device": "Pyrheliometer MS-57, Eko Instruments",
+    "station": "TARO-Melpitz"
+  },
+  "A202400062": {
+    "serial": "S22070.08",
+    "device": "Pyrgeometer MS-21, Eko Instruments",
     "station": "TARO-Melpitz"
   }
 }
