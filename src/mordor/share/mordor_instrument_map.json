@@ -20,62 +20,62 @@
   "A201200136": {
     "serial": "S11122.07",
     "device": "Suntracker STR-22G, Eko Instruments",
-    "station": "MORDOR 1"
+    "station": "TARO-Mobile"
   },
   "A201200137": {
     "serial": "P12029",
     "device": "Pyrheliometer MS-56, Eko Instruments",
-    "station": "MORDOR 1"
+    "station": "TARO-Mobile"
   },
   "A201200138": {
     "serial": "E10743",
     "device": "Logger CR1000, Campbell Sci.",
-    "station": "MORDOR 1"
+    "station": "TARO-Mobile"
   },
   "A201200139": {
     "serial": "122863",
     "device": "Pyranometer CMP21, Kipp & Zonen",
-    "station": "MORDOR 1"
+    "station": "TARO-Mobile"
   },
   "A201200140": {
     "serial": "122864",
     "device": "Pyranometer CMP21, Kipp & Zonen",
-    "station": "MORDOR 1"
+    "station": "TARO-Mobile"
   },
   "A201200141": {
     "serial": "120520",
     "device": "Pyrgeometer CGR4 10k thermistor, Kipp & Zonen",
-    "station": "MORDOR 1"
+    "station": "TARO-Mobile"
   },
   "A201200144": {
     "serial": "143.1012.0812.033",
     "device": "Weather station WS-300, Lufft",
-    "station": "MORDOR 1"
+    "station": "TARO-Mobile"
   },
   "A201300014": {
     "serial": "FE8172V",
     "device": "All-Sky-Camera Vivotek",
-    "station": "MORDOR 1"
+    "station": "TARO-Mobile"
   },
   "A201700049": {
     "serial": "170738",
     "device": "Pyranometer CMP21 10k thermistor, Kipp & Zonen",
-    "station": "MORDOR 1"
+    "station": "TARO-Mobile"
   },
   "A201700050": {
     "serial": "160182",
     "device": "Pyrgeometer CGR4 10k thermistor, Kipp & Zonen",
-    "station": "MORDOR 1"
+    "station": "TARO-Mobile"
   },
   "10004.23": {
     "serial": "10004.23",
     "device": "Pyranometer ML-020-VM, Eko Instruments",
-    "station": "MORDOR 1"
+    "station": "TARO-Mobile"
   },
   "11107.038": {
     "serial": "11107.038",
     "device": "Pyranometer ML-020-VM, Eko Instruments",
-    "station": "MORDOR 1"
+    "station": "TARO-Mobile"
   },
   // TARO-LACROS
   "S17139313": {
@@ -188,7 +188,7 @@
   "A202200021": {
     "serial": "S21023066",
     "device": "Pyranometer MS-80, Eko Instruments",
-    "station": "MORDOR 4 (Cape Verde)"
+    "station": "TARO-OSCM (Cape Verde)"
   },
   "A202200022": {
     "serial": "S21023067",
