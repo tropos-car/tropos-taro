@@ -184,6 +184,50 @@ def to_l1b(ds_l1a, resolution, *, config=None):
     flx_vars = config["l1b_flux_variables"]
     ds_l1b = ds_l1a.copy()
 
+    # 3. add coordinats if available in config
+    if config["coordinates"] is not None:
+        lat, lon, alt = config["coordinates"]
+        if lat is not None:
+            ds_l1b["lat"] = lat
+        if lon is not None:
+            ds_l1b["lon"] = lon
+        if alt is not None:
+            ds_l1b["altitude"] = alt
+
+    # 4. add sun position
+    if ("lat" in ds_l1b) and ("lon" in ds_l1b):
+        szen, sazi = sp.sun_angles(
+            time=ds_l1b.time.values,
+            lat=ds_l1b.lat.values,
+            lon=ds_l1b.lon.values
+        )
+        szen = szen.squeeze()
+        sazi = sazi.squeeze()
+
+        esd = np.mean(sp.earth_sun_distance(ds_l1b.time.values))
+
+        ds_l1b = ds_l1b.assign(
+            {
+                "szen": (("time"), szen),
+                "sazi": (("time"), sazi),
+                "esd":  esd
+            }
+        )
+        # update attributes and encoding
+        for key in ['szen', 'sazi', 'esd']:
+            ds_l1b[key].attrs.update(vattrs[key])
+
+    # x. correct dark current
+    for var in flx_vars:
+        if "longwave" in ds_l1b[var].attrs["standard_name"]:
+            continue
+        dark = np.nanpercentile(ds_l1b[var].values[szen>80],10)
+        ds_l1b[var].values = ds_l1b[var].values - dark
+        ds_l1b[var].attrs.update({
+            "dark_offset": dark,
+            "dark_offset_units":ds_l1b[var].attrs['units']
+        })
+
     # 1. calibrate flux vars
     for var in flx_vars:
         troposID = ds_l1b[var].attrs["troposID"]
@@ -257,38 +301,38 @@ def to_l1b(ds_l1a, resolution, *, config=None):
                 "standard_name": f"{method}_"+ds_l1b[f"{var}_{method}"].attrs["standard_name"]
             })
 
-    # 3. add coordinats if available in config
-    if config["coordinates"] is not None:
-        lat, lon, alt = config["coordinates"]
-        if lat is not None:
-            ds_l1b["lat"] = lat
-        if lon is not None:
-            ds_l1b["lon"] = lon
-        if alt is not None:
-            ds_l1b["altitude"] = alt
-
-    # 4. add sun position
-    if ("lat" in ds_l1b) and ("lon" in ds_l1b):
-        szen, sazi = sp.sun_angles(
-            time=ds_l1b.time.values,
-            lat=ds_l1b.lat.values,
-            lon=ds_l1b.lon.values
-        )
-        szen = szen.squeeze()
-        sazi = sazi.squeeze()
-
-        esd = np.mean(sp.earth_sun_distance(ds_l1b.time.values))
-
-        ds_l1b = ds_l1b.assign(
-            {
-                "szen": (("time"), szen),
-                "sazi": (("time"), sazi),
-                "esd":  esd
-            }
-        )
-        # update attributes and encoding
-        for key in ['szen', 'sazi', 'esd']:
-            ds_l1b[key].attrs.update(vattrs[key])
+    # # 3. add coordinats if available in config
+    # if config["coordinates"] is not None:
+    #     lat, lon, alt = config["coordinates"]
+    #     if lat is not None:
+    #         ds_l1b["lat"] = lat
+    #     if lon is not None:
+    #         ds_l1b["lon"] = lon
+    #     if alt is not None:
+    #         ds_l1b["altitude"] = alt
+    #
+    # # 4. add sun position
+    # if ("lat" in ds_l1b) and ("lon" in ds_l1b):
+    #     szen, sazi = sp.sun_angles(
+    #         time=ds_l1b.time.values,
+    #         lat=ds_l1b.lat.values,
+    #         lon=ds_l1b.lon.values
+    #     )
+    #     szen = szen.squeeze()
+    #     sazi = sazi.squeeze()
+    #
+    #     esd = np.mean(sp.earth_sun_distance(ds_l1b.time.values))
+    #
+    #     ds_l1b = ds_l1b.assign(
+    #         {
+    #             "szen": (("time"), szen),
+    #             "sazi": (("time"), sazi),
+    #             "esd":  esd
+    #         }
+    #     )
+    #     # update attributes and encoding
+    #     for key in ['szen', 'sazi', 'esd']:
+    #         ds_l1b[key].attrs.update(vattrs[key])
 
     # 5. add BSRN quality flags
     ds_l1b = mordor.qcrad.quality_control(ds_l1b)
