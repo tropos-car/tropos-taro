@@ -133,6 +133,8 @@ class MORDORQuicklooks:
             values *= scale
             values += add_offset
             pl, = ax.plot(dsp.time.values, values, label=varlabel, **kwargs)
+            ax.set_xlim((dsp.time.values[0].astype("datetime64[D]"),
+                         dsp.time.values[0].astype("datetime64[D]") + np.timedelta64(23 * 60 + 59, 'm')))
             plots.append(pl)
 
         return plots
@@ -184,7 +186,6 @@ class MORDORQuicklooks:
             }
 
         plots = []
-
 
         pax = ax.twinx()
         rax = ax.twinx()
