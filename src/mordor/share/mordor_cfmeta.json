@@ -274,6 +274,34 @@
         "zlib": true
       }
     },
+    "test_panel": {
+      "type": "i4",
+      "attributes": {
+        "units": "V",
+        "scale_factor": 2.5e-9,
+        "add_offset": 0.0,
+        "valid_range": [
+          -2000000000,
+          2000000000
+        ],
+        "_FillValue": 2147483647,
+        "zlib": true
+      }
+    },
+    "battery_voltage": {
+      "type": "u4",
+      "attributes": {
+        "units": "V",
+        "scale_factor": 5e-9,
+        "add_offset": 0.0,
+        "valid_range": [
+          0,
+          4000000000
+        ],
+        "_FillValue": 4294967295,
+        "zlib": true
+      }
+    },
     "szen": {
       "type": "u2",
       "attributes": {
