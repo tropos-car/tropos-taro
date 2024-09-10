@@ -90,6 +90,7 @@ def to_l1a(
     dat["time"] = pd.to_datetime(dat['time'].astype(str), format='mixed')
     ds = dat.set_index("time").to_xarray()
     ds = ds.drop_vars(["record"])
+    ds = ds.astype(float)  # ensure "NaN" to np.nan
 
     # add meta
     for name, troposid in zip(names,table_map[:,1]):
