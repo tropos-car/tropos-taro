@@ -215,6 +215,11 @@
     "device": "Spectrometer MS-713, Eko Instruments",
     "station": "TARO-OSCM (Cape Verde)"
   },
+  "S24012236":{
+    "serial": "S24012236",
+    "device": "Pyranometer ML-01, Eko Instruments",
+    "station": "TARO-OSCM (Cape Verde)"
+  },
   // TARO-Melpitz
   "A202200091": {
     "serial": "40032",
@@ -254,6 +259,11 @@
   "A202400062": {
     "serial": "S22070.08",
     "device": "Pyrgeometer MS-21, Eko Instruments",
+    "station": "TARO-Melpitz"
+  },
+  "S24012237":{
+    "serial": "S24012237",
+    "device": "Pyranometer ML-01, Eko Instruments",
     "station": "TARO-Melpitz"
   }
 }
