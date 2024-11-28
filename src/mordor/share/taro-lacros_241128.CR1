@@ -1,0 +1,175 @@
+'CR1000 Series Datalogger
+'Date: 2024-11-28
+'Program author: Jonas Witthuhn
+
+'Declare Constants
+'=================
+' Sensor Channels
+Const Channel_MS56 = 1 'Diff
+Const Channel_MS80_global = 4 'Diff
+Const Channel_MS80_diffuse = 3 'Diff
+Const Channel_ML01 = 15 'SE
+Const Channel_CGR4 = 5 'Diff
+Const Channel_T_MS56 = 3 'SE
+Const Channel_T_CGR4 = 6 'Diff
+
+' NTP time server
+Const timeserv  = "192.168.1.201"
+' STR22 Communications
+Const CR=CHR(13)' non printable character "carriage return"
+Const TrackerMR="MR"&CR ' request current tracking angle
+Const TrackerTM="TM"&CR ' request current time
+Const TrackerCR="CR"&CR ' request calculated tracking angle
+Const TrackerLO="LO"&CR ' request location info
+
+'Declare Private Variables
+'=========================
+Dim Rs_Rf_ratio ' Sensor- to Reference-Resistor ratio for PT100 measurements
+Const CGR4_alpha = 3.9080*10^(-3) ' CGR4 PT100 factor
+Const CGR4_beta = -5.8019*10^(-7) ' CGR4 PT100 factor
+
+'Declare Public Variables
+'========================
+Public Timeoffset As Long ' NTP time offset
+Public PTemp : Units PTemp = degC ' CR1000X Panel temperature
+Public Batt_volt : Units Batt_volt = V ' Logger Battery Voltage
+' STR-22/21 communications
+Public Response As String *50 ' STR-22 serial output
+Public STRtime(6) ' Store time requested from STR-22
+'Sensor Tempartures
+Public T_MS56 : Units T_MS56 = degC
+Public T_CGR4 : Units T_CGR4 = degC
+'Public Variable Arrays
+Public TimeCR(9) ' stores logger real time clock value
+Public RadMes(5) ' stores MS-56, 2xMS-80, ML01, CGR4 sample voltages
+Public WS300Data(19) ' stores buffer 0,1,2,3, and 4 of WS300-UMB
+Public VentilatorPulse(3) ' Frequency of MV01/CVF3 Ventilators
+
+'Declare Alias and Units
+'=======================
+' Ventilators
+Alias VentilatorPulse(1) = MS80_global_pulse : Units MS80_global_pulse = Hz
+Alias VentilatorPulse(2) = MS80_diffuse_pulse : Units MS80_diffuse_pulse = Hz
+Alias VentilatorPulse(3) = CGR4_pulse : Units CGR4_pulse = Hz
+' Radiation
+Alias RadMes(1) = MS56 : Units MS56 = mV
+Alias RadMes(2) = MS80_global : Units MS80_global = mV
+Alias RadMes(3) = MS80_diffuse : Units MS80_diffuse = mV
+Alias RadMes(4) = ML01 : Units ML01 = mV
+Alias RadMes(5) = CGR4 : Units CGR4 = mV
+' Meteorologie
+Alias WS300Data(1) = actAirT : Units actAirT = degC 
+Alias WS300Data(2) = actRelH : Units actRelH = %
+Alias WS300Data(3) = actDewP : Units actDewP = degC
+Alias WS300Data(4) = absAirP : Units absAirP = hPa
+Alias WS300Data(5) = relAirP : Units relAirP = hPa
+Alias WS300Data(6) = minAirT : Units minAirT = degC
+Alias WS300Data(7) = maxAirT : Units maxAirT = degC
+Alias WS300Data(8) = avgAirT : Units avgAirT = degC
+Alias WS300Data(9) = avgRelH : Units avgRelH = %
+Alias WS300Data(10) = minRelH : Units minRelH = %
+Alias WS300Data(11) = maxRelH : Units maxRelH = %
+Alias WS300Data(12) = minRelAirP : Units minRelAirP = hPa
+Alias WS300Data(13) = maxRelAirP : Units maxRelAirP = hPa
+Alias WS300Data(14) = avgRelAirP : Units avgRelAirP = hPa
+Alias WS300Data(15) = minAbsH : Units minAbsH = g m-3
+Alias WS300Data(16) = maxAbsH : Units maxAbsH = g m-3
+Alias WS300Data(17) = avgAbsH : Units avgAbsH = g m-3
+Alias WS300Data(18) = actWetBT : Units actWetBT = degC
+Alias WS300Data(19) = actSpecEnth : Units actSpecEnth = kJ kg-1
+
+' Convert sensor to reference ratio (X) to Sensor Temperature (T) in degC
+Sub CGR4_PT100calc (X,T)
+  T = (-CGR4_alpha + SQR(CGR4_alpha^2 - 4*CGR4_beta*(1-X)))/(2*CGR4_beta)
+End Sub
+
+'Define Data Tables
+'==================
+DataTable(CR1000Status,1,-1)
+  DataInterval(0,60,Min,1)
+  Sample(1,PTemp,FP2)
+  Sample(6,TimeCR(),FP2)
+EndTable
+
+DataTable(Radiation,1,-1)
+  DataInterval(0,0,mSec,1) 'same as Scan interval
+  TableFile("CRD:Radiation.dat",64,-1,0,1,Day,0,0) ' backup daylie files on SDCard
+  Sample(5,RadMes(),FP2)
+  Sample(1,T_MS56,FP2)
+  Sample(1,T_CGR4,FP2)
+EndTable
+
+DataTable(Meteorologie,1,-1)
+  TableFile("CRD:Meteorologie.dat",64,-1,0,1,Day,0,0) ' backup daylie files on SDCard
+  DataInterval(0,1,Min,1)
+  Average(19,WS300Data(),FP2,0)
+EndTable
+
+DataTable(SensorStatus,1,-1)
+  TableFile("CRD:SensorStatus.dat",64,-1,0,1,Day,0,0) ' backup daylie files on SDCard
+  DataInterval(0,10,Min,1)
+  Average(1,T_MS56,FP2,0)
+  Average(1,T_CGR4,FP2,0)
+  Average(3,VentilatorPulse(),FP2,0)
+EndTable
+
+'=======================================================================
+'Main Program
+'============
+BeginProg
+  ' Sync time at Program Start and then every 15min
+  ' see SlowSequence 2
+  Timeoffset = NetworkTimeProtocol(timeserv,0,50)
+  
+	Scan (100,mSec,0,0)
+    ' MS56, MS80, ML01
+    ' Sampling Time = (0.45ms settling) + (0.25ms integration) = 0.7ms
+		VoltDiff(MS56, 1, mV25, Channel_MS56, False, 450, 250, 1, 0)
+		VoltDiff(MS80_global, 1, mV25, Channel_MS80_global, False, 450, 250, 1, 0)
+		VoltDiff(MS80_diffuse, 1, mV25, Channel_MS80_diffuse, False, 450, 250, 1, 0)
+		VoltSe(ML01, 1, mV250, Channel_ML01, False, 450, 250, 1, 0)
+		' CGR4
+    ' Sampling Time = (3ms settling) + (0.25ms integration) = 3.25ms
+		VoltDiff(CGR4, 1,mV2_5, Channel_CGR4, False, 3000, 250, 1, 0)
+
+		'Sensor temperatures
+		'Temperature CGR4
+		' Sampling time: 2 * 2* ((0.45ms settling) + (0.25ms integration)) = 2.8ms
+    BrHalf4W(Rs_Rf_ratio,1,Autorange,Autorange,Channel_T_CGR4,Vx3,1,400,False,False,450,250,1,0)
+    Call CGR4_PT100calc(Rs_Rf_ratio, T_CGR4)
+    'Temperature MS-56
+    ' Sampling time: 2* 2 * 2* ((0.45ms settling) + (0.25ms integration)) = 5.6ms
+    BrHalf3W(Rs_Rf_ratio,1,Autorange,Channel_T_MS56,Vx1,1,2100,False,450,250,100,0)
+    PRTCalc(T_MS56,1,Rs_Rf_ratio,0,1,0)
+    
+    'tacho
+     PulseCount(CGR4_pulse,1,11,0,1,1.0,0)
+     PulseCount(MS80_global_pulse,1,12,0,1,1.0,0)
+     PulseCount(MS80_diffuse_pulse,1,13,0,1,1.0,0)
+		
+		CallTable Radiation
+		CallTable SensorStatus
+	NextScan
+	
+  '======= Scan Weather Station, Suntracker, Logger  ====
+  SlowSequence
+  Scan(10,Sec,1,0)
+    ' internal Parameter
+    PanelTemp (PTemp,15000)
+		Battery(Batt_volt)
+    'get WS300 measurements
+    SDI12Recorder(WS300Data(),5,"0","C!",1,0)    
+
+    CallTable Meteorologie
+    CallTable CR1000Status
+  NextScan
+  
+  '========= Sync Time ===============
+  SlowSequence
+  Scan(1,Min,1,0)
+     Timeoffset = NetworkTimeProtocol(timeserv,0,50)  
+  NextScan
+
+EndProg
+
+
