@@ -49,9 +49,11 @@ include = ["taro"]
 [tool.setuptools.package-data]
 taro = ["share/*.json", "share/*.CR1X", "share/*.CR1", "conf/*.json", "conf/*.template"]
 
-[tool.setuptools.scripts]
-taro-wiser_move = "bin/taro-wiser_move.bat"
-taro-asi16_move = "bin/taro-asi16_move.bat"
+[tool.setuptools]
+script-files = [
+    "bin/taro-wiser_move.bat",
+    "bin/taro-asi16_move.bat"
+]
 
 [tool.setuptools_scm]
 local_scheme = "dirty-tag"
