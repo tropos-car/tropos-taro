@@ -1,4 +1,4 @@
-// DEFAULT PROCESSING CONFIGURATION of MORDOR
+// DEFAULT PROCESSING CONFIGURATION of TARO
 // It is recommended to create a separate config.json including
 //  at least specific project meta information.
 {
@@ -10,11 +10,11 @@
   "wiser_raw" : "{dt:%Y-%m-%dT%H}_taro-wiser_{campaign}.{sfx}",
   "wiser_out" : "{dt:%Y-%m-%d}_taro-wiser_{campaign}.{sfx}",
   // Config Files
-  "file_log": "mordor.log",
-  "file_cfmeta": "share/mordor_cfmeta.json",
-  "file_calibration": "share/mordor_calibration.json",
-  "file_logger_tables": "share/mordor_logger_tables.json",
-  "file_instrument_map": "share/mordor_instrument_map.json",
+  "file_log": "taro.log",
+  "file_cfmeta": "share/taro_cfmeta.json",
+  "file_calibration": "share/taro_calibration.json",
+  "file_logger_tables": "share/taro_logger_tables.json",
+  "file_instrument_map": "share/taro_instrument_map.json",
   // Meta information
   "campaign": "", // Campaign name
   "project": "", // Project name

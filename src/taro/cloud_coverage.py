@@ -23,7 +23,7 @@ try:
     from tropos_uv import get_config
 except:
     # print("import local get_config")
-    from mordor import get_config
+    from taro import get_config
 
 
 
@@ -160,7 +160,7 @@ def adjust():
     startdate=datetime.date.today()
 
     """Get name of directory where main script is located"""
-    current_dirname = importlib.resources.files("mordor")
+    current_dirname = importlib.resources.files("taro")
     if not current_dirname :
         current_dirname = os.path.dirname(os.path.realpath(__file__))
         print("Current_dir cannot be taken from importlib.resources")

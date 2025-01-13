@@ -10,10 +10,10 @@ from unitpy import Unit
 from toolz import keyfilter, valfilter, assoc_in
 import trosat.sunpos as sp
 
-import mordor
-import mordor.utils
-import mordor.futils
-import mordor.qcrad
+import taro
+import taro.utils
+import taro.futils
+import taro.qcrad
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +55,8 @@ def to_l1a(
     xarray.Dataset
         Raw Logger data for one measurement periode.
     """
-    config = mordor.utils.merge_config(config)
-    gattrs, vattrs, vencode = mordor.futils.get_cfmeta(config)
+    config = taro.utils.merge_config(config)
+    gattrs, vattrs, vencode = taro.futils.get_cfmeta(config)
 
     if global_attrs is not None:
         gattrs.update(global_attrs)
@@ -67,7 +67,7 @@ def to_l1a(
         config["fname_out"],
         os.path.basename(fname)
     )
-    table_config = mordor.utils.read_json(config["file_logger_tables"])[fname_info["table"]]
+    table_config = taro.utils.read_json(config["file_logger_tables"])[fname_info["table"]]
     usecols = np.argwhere([v is not None for v in table_config]).ravel()
 
     table_map = np.array([table_config[i] for i in usecols])
@@ -96,7 +96,7 @@ def to_l1a(
     for name, troposid in zip(names,table_map[:,1]):
         if (name == "record") or (name == "time"):
             continue
-        meta = mordor.utils.meta_lookup(config,troposID=troposid)
+        meta = taro.utils.meta_lookup(config,troposID=troposid)
         # drop calibration meta
         meta = keyfilter(lambda x: not x.startswith('calibration'), meta)
         # drop None values
@@ -149,8 +149,8 @@ def to_l1a(
     now = pd.to_datetime(np.datetime64("now"))
     gattrs.update({
         'processing_level': 'l1a',
-        'product_version': mordor.__version__,
-        'history': f'{now.isoformat()}: Generated level l1a  by mordor version {mordor.__version__}; ',
+        'product_version': taro.__version__,
+        'history': f'{now.isoformat()}: Generated level l1a  by taro version {taro.__version__}; ',
     })
     ds.attrs.update(gattrs)
 
@@ -158,7 +158,7 @@ def to_l1a(
     ds = ds.drop_duplicates("time")
 
     # add global coverage attributes
-    ds = mordor.futils.update_coverage_meta(ds, timevar="time")
+    ds = taro.futils.update_coverage_meta(ds, timevar="time")
 
     # add attributes to Dataset
     for k,v in vattrs.items():
@@ -169,14 +169,14 @@ def to_l1a(
             ds[ki].attrs.update(v)
 
     # add encoding to Dataset
-    ds = mordor.futils.add_encoding(ds, vencode)
+    ds = taro.futils.add_encoding(ds, vencode)
 
     return ds
 
 
 def to_l1b(ds_l1a, resolution, *, config=None):
-    config = mordor.utils.merge_config(config)
-    gattrs, vattrs, vencode = mordor.futils.get_cfmeta(config)
+    config = taro.utils.merge_config(config)
+    gattrs, vattrs, vencode = taro.futils.get_cfmeta(config)
 
     if ds_l1a.processing_level != "l1a":
         logger.warning(f"Is not a l1a file. Skip.")
@@ -232,7 +232,7 @@ def to_l1b(ds_l1a, resolution, *, config=None):
     # 1. calibrate flux vars
     for var in flx_vars:
         troposID = ds_l1b[var].attrs["troposID"]
-        calib = mordor.utils.parse_calibration(
+        calib = taro.utils.parse_calibration(
             cfile=config["file_calibration"],
             troposID=troposID,
             cdate=ds_l1b.time.values[0]
@@ -288,7 +288,7 @@ def to_l1b(ds_l1a, resolution, *, config=None):
 
     # 2. resample dataset
     methods = ['mean'] + config["l1b_resample_stats"]
-    res = mordor.futils.resample(
+    res = taro.futils.resample(
         ds_l1b,
         freq=resolution,
         methods=methods,
@@ -336,25 +336,25 @@ def to_l1b(ds_l1a, resolution, *, config=None):
     #         ds_l1b[key].attrs.update(vattrs[key])
 
     # 5. add BSRN quality flags
-    ds_l1b = mordor.qcrad.quality_control(ds_l1b)
+    ds_l1b = taro.qcrad.quality_control(ds_l1b)
 
     # 6. add global coverage attributes
-    ds_l1b = mordor.futils.update_coverage_meta(ds_l1b, timevar="time")
+    ds_l1b = taro.futils.update_coverage_meta(ds_l1b, timevar="time")
     ds_l1b.attrs["processing_level"] = 'l1b'
     now = pd.to_datetime(np.datetime64("now"))
-    ds_l1b.attrs["history"] = ds_l1b.history + f"{now.isoformat()}: Generated level l1b  by mordor version {mordor.__version__}; "
-    ds_l1b.attrs['product_version'] = mordor.__version__
+    ds_l1b.attrs["history"] = ds_l1b.history + f"{now.isoformat()}: Generated level l1b  by taro version {taro.__version__}; "
+    ds_l1b.attrs['product_version'] = taro.__version__
 
     # update encoding
-    ds_l1b = mordor.futils.add_encoding(ds_l1b, vencode=vencode)
+    ds_l1b = taro.futils.add_encoding(ds_l1b, vencode=vencode)
 
     return ds_l1b
 
 
 def wiser_to_l1a(date, pf, *, config=None, global_attrs=None):
     # load config and nc config
-    config = mordor.utils.merge_config(config)
-    gattrs, vattrs, vencode = mordor.futils.get_cfmeta(config)
+    config = taro.utils.merge_config(config)
+    gattrs, vattrs, vencode = taro.futils.get_cfmeta(config)
 
     if global_attrs is not None:
         gattrs.update(global_attrs)
@@ -429,7 +429,7 @@ def wiser_to_l1a(date, pf, *, config=None, global_attrs=None):
             continue
         i = 0 if var.endswith("711") else 1
 
-        meta = mordor.utils.meta_lookup(config, troposID=config["wiser_ids"][i])
+        meta = taro.utils.meta_lookup(config, troposID=config["wiser_ids"][i])
         # drop calibration meta
         meta = keyfilter(lambda x: not x.startswith('calibration'), meta)
         # drop None values
@@ -451,8 +451,8 @@ def wiser_to_l1a(date, pf, *, config=None, global_attrs=None):
     now = pd.to_datetime(np.datetime64("now"))
     gattrs.update({
         'processing_level': 'l1a',
-        'product_version': mordor.__version__,
-        'history': f'{now.isoformat()}: Generated level l1a  by mordor version {mordor.__version__}; ',
+        'product_version': taro.__version__,
+        'history': f'{now.isoformat()}: Generated level l1a  by taro version {taro.__version__}; ',
     })
     ds.attrs.update(gattrs)
 
@@ -460,7 +460,7 @@ def wiser_to_l1a(date, pf, *, config=None, global_attrs=None):
     ds = ds.drop_duplicates("time")
 
     # add global coverage attributes
-    ds = mordor.futils.update_coverage_meta(ds, timevar="time")
+    ds = taro.futils.update_coverage_meta(ds, timevar="time")
 
     # add attributes to Dataset
     for k, v in vattrs.items():
@@ -469,6 +469,6 @@ def wiser_to_l1a(date, pf, *, config=None, global_attrs=None):
             ds[ki].attrs.update(v)
 
     # add encoding to Dataset
-    ds = mordor.futils.add_encoding(ds, vencode)
+    ds = taro.futils.add_encoding(ds, vencode)
 
     return ds

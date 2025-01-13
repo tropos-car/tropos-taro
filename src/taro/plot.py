@@ -13,9 +13,9 @@ import matplotlib.dates as mdates
 import matplotlib.patheffects as pe
 
 
-from mordor.qcrad import SNAMES, CONSTANTS
-import mordor.utils
-import mordor.futils
+from taro.qcrad import SNAMES, CONSTANTS
+import taro.utils
+import taro.futils
 
 class CMAPS:
     ghi = plt.cm.Blues
@@ -44,9 +44,9 @@ class LABELS:
     freq = 'ventilator frequency'
 
 @xr.register_dataset_accessor("quicklooks")
-class MORDORQuicklooks:
+class TAROQuicklooks:
     """
-    MORDOR quicklooks
+    TARO quicklooks
     """
     def __init__(self, xarray_obj):
         self.ds = xarray_obj
@@ -115,7 +115,7 @@ class MORDORQuicklooks:
             return [pl]
 
         if freq is not None:
-            dsp = mordor.futils.resample(dsp, freq=freq)
+            dsp = taro.futils.resample(dsp, freq=freq)
 
         if cmap is not None:
             ax.set_prop_cycle(color=cmap(np.linspace(0.9, 0.4, len(dsp.keys()))))
@@ -170,7 +170,7 @@ class MORDORQuicklooks:
         return plots
 
     def _set_axis_lim(self, ax, nticks, ylims, base, padding):
-        lims = mordor.utils.round_to(base, np.array(ylims))
+        lims = taro.utils.round_to(base, np.array(ylims))
         tmax = lims[1] if lims[1] >= ylims[1] else lims[1] + padding
         tmin = lims[0] if lims[0] <= ylims[0] else lims[0] - padding
         ax.set_ylim([tmin, tmax])

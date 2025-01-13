@@ -102,11 +102,11 @@ def get_attrs_enc(d : dict) -> (dict,dict):
 
 def get_default_config():
     """
-    Get MORDOR default config
+    Get TARO default config
     """
     fn_config = os.path.join(
-        importlib.resources.files("mordor"),
-        "conf/mordor_config.json"
+        importlib.resources.files("taro"),
+        "conf/taro_config.json"
     )
     default_config = read_json(fn_config)
 
@@ -115,7 +115,7 @@ def get_default_config():
         if key.startswith("file"):
             default_config.update({
                 key: os.path.join(
-                    importlib.resources.files("mordor"),
+                    importlib.resources.files("taro"),
                     default_config[key]
                 )
             })
@@ -123,7 +123,7 @@ def get_default_config():
 
 def merge_config(config):
     """
-    Merge config dictionary with MORDOR default config
+    Merge config dictionary with taro default config
     """
     default_config = get_default_config()
     if config is None:
@@ -135,7 +135,7 @@ def merge_config(config):
 
 def init_logger(config):
     """
-    Initialize Logging based on MORDOR config
+    Initialize Logging based on taro config
     """
     config = merge_config(config)
     fname = os.path.abspath(config["file_log"])

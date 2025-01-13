@@ -1,5 +1,5 @@
 {
-  // MORDOR broadband sensor calibrations
+  // TARO-CORE broadband sensor calibrations
   // [calibration_factor, calibration_factor_uncertainty]
   "units": ["uV W-1 m2", "%"],
   "temp_correction": {

@@ -6,16 +6,16 @@ import logging
 import parse
 from toolz import assoc_in
 
-import mordor.utils
+import taro.utils
 
 logger = logging.getLogger(__name__)
 
 def raw2daily(inpath, outpath, tables=None, config=None):
-    config = mordor.utils.merge_config(config)
+    config = taro.utils.merge_config(config)
 
     # if None, process all available tables (from config)
     if tables is None:
-        tables = [key for key in mordor.utils.read_json(config["file_logger_tables"])]
+        tables = [key for key in taro.utils.read_json(config["file_logger_tables"])]
 
     for table in tables:
         infname = os.path.join(inpath, config["fname_raw"].format(loggername=config["logger_name"], table=table))
@@ -219,17 +219,17 @@ def merge_with_rename(dss, dim='time', override=[]):
 def get_cfmeta(config=None):
     """Read global and variable attributes and encoding from cfmeta.json
     """
-    config= mordor.utils.merge_config(config)
+    config= taro.utils.merge_config(config)
     # parse the json file
-    cfdict = mordor.utils.read_json(config["file_cfmeta"])
+    cfdict = taro.utils.read_json(config["file_cfmeta"])
     # get global attributes:
     gattrs = cfdict['attributes']
     # apply config
     gattrs = {k:v.format_map(config) for k,v in gattrs.items()}
     # get variable attributes
-    d = mordor.utils.get_var_attrs(cfdict)
+    d = taro.utils.get_var_attrs(cfdict)
     # split encoding attributes
-    vattrs, vencode = mordor.utils.get_attrs_enc(d)
+    vattrs, vencode = taro.utils.get_attrs_enc(d)
     return gattrs ,vattrs, vencode
 
 def add_encoding(ds, vencode=None):
