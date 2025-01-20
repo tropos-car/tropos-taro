@@ -12,31 +12,31 @@ import importlib.resources
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-import mordor
-import mordor.utils
-import mordor.futils
-import mordor.data
-import mordor.plot
-import mordor.keogram
+import taro
+import taro.utils
+import taro.futils
+import taro.data
+import taro.plot
+import taro.keogram
 
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_CONFIG = fn_config = os.path.join(
-        importlib.resources.files("mordor"),
-        "conf/mordor_config.json"
+        importlib.resources.files("taro"),
+        "conf/taro_config.json"
     )
 def _configure(config):
     if config is None:
-        config = mordor.utils.get_default_config()
+        config = taro.utils.get_default_config()
     else:
-        config = mordor.utils.read_json(os.path.abspath(config))
-        config = mordor.utils.merge_config(config)
+        config = taro.utils.read_json(os.path.abspath(config))
+        config = taro.utils.merge_config(config)
     return config
 
 # initialize commandline interface
 @click.version_option()
-@click.group("mordor")
+@click.group("taro")
 def cli():
     pass
 
@@ -57,10 +57,10 @@ def raw2daily(input_path: str,
     The daily output files are named according to config['fname_out'] (default is '{dt:%Y-%m-%d}_taro-core_{campaign}_{table}_{resolution}_{datalvl}.c{collection:02d}.{sfx}').
     """
     config = _configure(config)
-    mordor.utils.init_logger(config)
+    taro.utils.init_logger(config)
 
-    logger.info("Call mordor.futils.raw2daily")
-    mordor.futils.raw2daily(
+    logger.info("Call taro.futils.raw2daily")
+    taro.futils.raw2daily(
        inpath=os.path.abspath(input_path),
        outpath=os.path.abspath(output_path),
        config=config
@@ -87,7 +87,7 @@ def process_l1a(input_files,
     Process input files (LoggerNet TOA5 ASCII Table Data) to rsd-car netcdf.
     """
     config = _configure(config)
-    mordor.utils.init_logger(config)
+    taro.utils.init_logger(config)
 
     with click.progressbar(input_files, label='Processing to l1a:') as files:
         for fn in files:
@@ -108,8 +108,8 @@ def process_l1a(input_files,
             if skip_exists and os.path.exists(outfile):
                 continue
 
-            logger.info("Call mordor.data.to_l1a")
-            ds = mordor.data.to_l1a(
+            logger.info("Call taro.data.to_l1a")
+            ds = taro.data.to_l1a(
                fname=fn,
                config=config
             )
@@ -117,7 +117,7 @@ def process_l1a(input_files,
                 logger.warning(f"Skip {fn}.")
                 continue
 
-            mordor.futils.to_netcdf(
+            taro.futils.to_netcdf(
                 ds=ds,
                 fname=outfile,
                 timevar="time"
@@ -138,14 +138,14 @@ def process_l1b(input_files,
                 resolution:str,
                 config: str):
     """
-    Process input files (mordor l1a) to mordor l1b files.
+    Process input files (taro l1a) to taro l1b files.
     Input files require at least the Radiation table (SensorStatus and Meteorologie are then assumed to be in the same directory).
     Flux variables are calibrated and corrected for sensor temperature.
     Dataset is resampled to desired resolution.
     Sun coordinate parameters are added.
     """
     config = _configure(config)
-    mordor.utils.init_logger(config)
+    taro.utils.init_logger(config)
 
     fdates = []
     for fn in input_files:
@@ -178,15 +178,15 @@ def process_l1b(input_files,
             if skip_exists and os.path.exists(outfile):
                 continue
 
-            ds_l1a = mordor.futils.merge_with_rename(
+            ds_l1a = taro.futils.merge_with_rename(
                 [xr.load_dataset(fn) for fn in files],
                 dim="time",
                 override=['lat','lon','altitude']
             )
             ds_l1a = ds_l1a.interpolate_na('time')
 
-            logger.info("Call mordor.data.to_l1b")
-            ds = mordor.data.to_l1b(
+            logger.info("Call taro.data.to_l1b")
+            ds = taro.data.to_l1b(
                 ds_l1a,
                 resolution=resolution,
                 config=config
@@ -195,14 +195,14 @@ def process_l1b(input_files,
                 logger.warning(f"Skip {fn}.")
                 continue
 
-            mordor.futils.to_netcdf(
+            taro.futils.to_netcdf(
                 ds=ds,
                 fname=outfile,
                 timevar="time"
             )
 
 ###########################
-# MORDOR plot
+# taro plot
 ###########################
 @cli.group("quicklook")
 def quickook():
@@ -219,7 +219,7 @@ def quickook():
               help="DPI for output png-file.")
 def ql_data(input_files, output_path, skip_exists, config,dpi):
     config = _configure(config)
-    mordor.utils.init_logger(config)
+    taro.utils.init_logger(config)
 
     with click.progressbar(input_files, label='Make daily data quicklooks:') as files:
         for fn in files:
@@ -270,7 +270,7 @@ def ql_data(input_files, output_path, skip_exists, config,dpi):
               help="DPI for output png-file.")
 def ql_quality(input_files: list, output_path: str, skip_exists:bool, config: dict, dpi: int):
     config = _configure(config)
-    mordor.utils.init_logger(config)
+    taro.utils.init_logger(config)
 
     with click.progressbar(input_files, label='Make daily quality quicklooks:') as files:
         for fn in files:
@@ -310,7 +310,7 @@ def ql_quality(input_files: list, output_path: str, skip_exists:bool, config: di
             plt.close(fig)
 
 ###########################
-# MORDOR info
+# taro info
 ###########################
 @cli.command("info")
 @click.argument("ids", nargs=-1)
@@ -321,15 +321,15 @@ def ql_quality(input_files: list, output_path: str, skip_exists:bool, config: di
 @click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
               help="Config file - will merge and override the default config.")
 def info(ids:str, calibration:bool, serial:bool, tropos:bool, device:bool, config: dict):
-    """Print MORDOR device information. If no option is selected, full information is printed.
+    """Print taro device information. If no option is selected, full information is printed.
     """
     config = _configure(config)
     if len(ids) == 0:
         cdate = dt.datetime.now()
-        mapping = mordor.utils.read_json(config["file_instrument_map"])
+        mapping = taro.utils.read_json(config["file_instrument_map"])
         ids, stations, ctimes = [],[],[]
         for id in mapping:
-            res = mordor.utils.parse_calibration(
+            res = taro.utils.parse_calibration(
                 config["file_calibration"],
                 troposID=id,
                 cdate=cdate,
@@ -382,9 +382,9 @@ def info(ids:str, calibration:bool, serial:bool, tropos:bool, device:bool, confi
             click.echo("")
 
         if id.startswith('A2'):
-            meta = mordor.utils.meta_lookup(config, troposID=id)
+            meta = taro.utils.meta_lookup(config, troposID=id)
         else:
-            meta = mordor.utils.meta_lookup(config, serial=id)
+            meta = taro.utils.meta_lookup(config, serial=id)
 
         if tropos:
             click.echo(f"TROPOS ID: {meta['troposID']}")
@@ -717,7 +717,7 @@ def asi16_keogram(
         finfo = parse.parse(config['asi16_out'], os.path.basename(fn)).named
         img_dates.append(finfo["dt"])
 
-    keogram = mordor.keogram.make_keogram(
+    keogram = taro.keogram.make_keogram(
         img_files=images,
         img_dates=img_dates,
         longitude=longitude,
@@ -739,11 +739,11 @@ def asi16_keogram(
         gs = fig.add_gridspec(nrows=7, ncols=1, wspace=0, hspace=0.05)
         ax_keo = fig.add_subplot(gs[1:, 0])
         ax_cf = fig.add_subplot(gs[0, 0], sharex=ax_keo)
-        ax_cf = mordor.plot.cloudfraction(cf, Nsmooth=10, ax=ax_cf)
+        ax_cf = taro.plot.cloudfraction(cf, Nsmooth=10, ax=ax_cf)
     else:
         fig, ax_keo = plt.subplots(1,1, figsize=(10, 6))
 
-    fig, ax_keo = mordor.keogram.plot_keogram(
+    fig, ax_keo = taro.keogram.plot_keogram(
         keogram,
         sdate=img_dates[0],
         edate=img_dates[-1],
@@ -794,7 +794,7 @@ def asi16_test_config(
         latitude = lat
 
     finfo = parse.parse(config['asi16_out'], os.path.basename(image)).named
-    image_out = mordor.keogram.test_image_config(
+    image_out = taro.keogram.test_image_config(
         img_file=image,
         img_date=finfo["dt"],
         longitude=longitude,
@@ -825,7 +825,7 @@ def wiser_l1a(input_files,
     Process input files to rsd-car netcdf.
     """
     config = _configure(config)
-    mordor.utils.init_logger(config)
+    taro.utils.init_logger(config)
 
     dates = []
     pfs = []
@@ -854,14 +854,14 @@ def wiser_l1a(input_files,
             if skip_exists and os.path.exists(outfile):
                 continue
 
-            logger.info("Call mordor.data.wiser_to_l1a")
-            ds = mordor.data.wiser_to_l1a(date=date, pf=pf, config=config)
+            logger.info("Call taro.data.wiser_to_l1a")
+            ds = taro.data.wiser_to_l1a(date=date, pf=pf, config=config)
 
             if ds is None:
                 logger.warning(f"Skip {fn}.")
                 continue
 
-            mordor.futils.to_netcdf(
+            taro.futils.to_netcdf(
                 ds=ds,
                 fname=outfile,
                 timevar="time"
@@ -885,7 +885,7 @@ def wiser_quicklook(input_files,
     Make wiser quicklooks.
     """
     config = _configure(config)
-    mordor.utils.init_logger(config)
+    taro.utils.init_logger(config)
 
     with click.progressbar(input_files, label='Make daily data quicklooks:') as files:
         for fn in files:
@@ -906,7 +906,7 @@ def wiser_quicklook(input_files,
                 continue
 
             ds = xr.load_dataset(fn)
-            fig,axs = mordor.plot.wiser_quicklook(ds)
+            fig,axs = taro.plot.wiser_quicklook(ds)
 
             os.makedirs(os.path.dirname(outfile), exist_ok=True)
             fig.savefig(outfile, dpi=dpi, bbox_inches='tight')

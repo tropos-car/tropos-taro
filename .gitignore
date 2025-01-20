@@ -1,3 +1,5 @@
+*_version.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -7,7 +9,7 @@ __pycache__/
 *.so
 
 # private config file
-src/mordor/conf/*.private
+src/taro/conf/*.private
 
 # Distribution / packaging
 .Python

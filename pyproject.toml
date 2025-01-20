@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools", "wheel", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "taro"
+dynamic = ["version"]
+description = "A Python module for handling the data of the Tropos Actris Radiation Observatory (TARO)"
+authors = [
+    {name = "Jonas Witthuhn", email = "witthuhn@tropos.de"}
+]
+license = {text = "GNU General Public License v3 (GPLv3)"}
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "xarray",
+    "netcdf4",
+    "pip",
+    "jstyleson",
+    "Click",
+    "toolz",
+    "addict",
+    "bottleneck",
+    "trosat-base @ git+https://github.com/hdeneke/trosat-base.git#egg=trosat-base",
+    "argparse",
+    "configparser",
+    "pandas",
+    "psycopg2-binary",
+    "parse>=1.20.0",
+    "unitpy",
+    "scipy",
+    "matplotlib"
+]
+
+[project.optional-dependencies]
+nbs = ["jupyter", "nbdev", "nbformat"]
+docs = ["sphinx", "myst-parser", "myst-nb"]
+
+[project.entry-points.console_scripts]
+taro-core = "taro.click:cli"
+taro-asi16 = "taro.click:cli_asi16"
+taro-wiser = "taro.click:cli_wiser"
+taro-cloud_coverage = "taro.cloud_coverage:adjust"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["taro"]
+
+[tool.setuptools.package-data]
+taro = ["share/*.json", "share/*.CR1X", "share/*.CR1", "conf/*.json", "conf/*.template"]
+
+[tool.setuptools]
+script-files = [
+    "bin/taro-wiser_move.bat",
+    "bin/taro-asi16_move.bat"
+]
+
+[tool.setuptools_scm]
+local_scheme = "dirty-tag"
+write_to = "src/taro/_version.py" 

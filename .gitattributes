@@ -1,2 +1,2 @@
-src/mordor/_version.py export-subst
+src/taro/_version.py export-subst
 *.ipynb merge=nbdev-merge
