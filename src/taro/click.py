@@ -1,3 +1,4 @@
+import shutil
 import os.path
 import warnings
 
@@ -484,7 +485,7 @@ def asi16_move(
             **config
         )
         os.makedirs(path_out, exist_ok=True)
-        os.replace(fn, os.path.join(path_out, fname_out))
+        shutil.move(fn, os.path.join(path_out, fname_out))
 
 def asi16_missing_dates(
         images_path: str,
@@ -600,7 +601,7 @@ def asi16_move_unprocessed(
             **config
         )
         os.makedirs(path_out, exist_ok=True)
-        os.replace(fn, os.path.join(path_out, fname_out))
+        shutil.move(fn, os.path.join(path_out, fname_out))
 
 @cli_asi16.command("move-processed")
 @click.argument("images_path", nargs=1)
@@ -656,8 +657,8 @@ def asi16_move_processed(
         )
         os.makedirs(path_out, exist_ok=True)
         os.makedirs(path_out_pro, exist_ok=True)
-        os.replace(fn, os.path.join(path_out, fname_out))
-        os.replace(fnp, os.path.join(path_out_pro, fname_out_pro))
+        shutil.move(fn, os.path.join(path_out, fname_out))
+        shutil.move(fnp, os.path.join(path_out_pro, fname_out_pro))
 
 
 @cli_asi16.command("keogram")
