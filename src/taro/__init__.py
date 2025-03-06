@@ -1,7 +1,7 @@
 
 from importlib.metadata import version, PackageNotFoundError
 try:
-    __version__ = version("starpas")
+    __version__ = version("taro")
 except PackageNotFoundError:
     # package is not installed
     pass
