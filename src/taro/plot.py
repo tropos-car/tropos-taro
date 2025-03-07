@@ -124,7 +124,7 @@ class TAROQuicklooks:
         for var in dsp:
             if device:
                 device = dsp[var].attrs["device"].split(',')[0]
-                device = re.sub("\s+", "\n", device)
+                device = re.sub(r"\s+", "\n", device)
                 id = dsp[var].attrs["troposID"]
                 varlabel = f"{label}\n{device}\n{id}"
             else:
@@ -347,16 +347,25 @@ class TAROQuicklooks:
         sumsw = Idir + Idif
         sumsw[sumsw < 50] = np.nan
 
+        cmap = getattr(CMAPS, "ghi")
         if ratio:
             Ighi = self._filter_device(standard_names=[SNAMES.ghi], ids=ids)
-            Ighi = Ighi.to_array(dim='new').mean("new", skipna=True)
+            ax.set_prop_cycle(color=cmap(np.linspace(0.9, 0.4, len(Ighi.keys()))))
+
+            #Ighi = Ighi.to_array(dim='new')#.mean("new", skipna=True)
             _ = ax.fill_between(
                 self.time,
                 np.ones(self.time.size)*0.92,
                 np.ones(self.time.size)*1.08,
                 **kwargs
             )
-            pl = ax.plot(self.time, Ighi/sumsw, color='blue', label=r"GHI/($\mu_0$DNI + DHI)")
+
+            for var in Ighi:
+                device = Ighi[var].attrs["device"].split(',')[0].split()[-1]
+                pl = ax.plot(self.time, Ighi[var]/sumsw, label=r"GHI/($\mu_0$DNI + DHI)"+f" {device}")
+            #Ighi = Ighi.mean("new", skipna=True)
+            #pl = ax.plot(self.time, Ighi/sumsw, color='blue', label=r"GHI/($\mu_0$DNI + DHI)")
+
             ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(ax.xaxis.get_major_locator()))
             return pl
 
@@ -451,16 +460,16 @@ class TAROQuicklooks:
         for i, var in enumerate(dsp):
             if labels is None:
                 device = dsp[var].attrs["device"].split(',')[0]
-                device = re.sub("\s+", "\n", device)
+                device = re.sub(r"\s+", "\n", device)
                 id = dsp[var].attrs["troposID"]
-                label = f"{device}\n{id}"
+                label = f"{device}\n{id}\n{var}"
             else:
                 label = labels[i]
             ax.annotate(
                 label,
                 (-0.01, 0.5 / N + float(i) / N),
                 xycoords="axes fraction",
-                rotation='vertical',
+                #rotation='vertical',
                 va='center', ha='right',
                 fontsize=fontsize
             )
@@ -502,6 +511,37 @@ class TAROQuicklooks:
         ax.yaxis.set_tick_params(length=40, width=2, color=lcolor, right=True)
         ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(ax.xaxis.get_major_locator()))
         return pl
+    
+    def solar_at_night(self, ax=None,kwargs={}):
+        kwargs_default = {
+            'color': '#f0f0f0',
+            'edgecolor': 'grey',
+            'label': 'LWD to Tair comparison'
+        }
+        kwargs = {**kwargs_default, **kwargs}
+
+        if ax is None:
+            ax = plt.gca()
+
+        snames = [
+            SNAMES.dhi,
+            SNAMES.ghi,
+            SNAMES.dni
+        ]
+
+        dsp = self._filter_device(standard_names=snames)
+        szen = self._filter_device(standard_names=SNAMES.szen)
+
+        dsp = dsp.where(self.ds.szen>100)
+
+        for var in dsp:
+            F = dsp[var] + dsp[var].attrs["dark_offset"]*1e6/dsp[var].attrs["calibration_factor"]
+            pl = ax.plot(dsp.time,F,label=var)
+        ax.legend()
+        ax.grid(True)
+        return pl
+
+        
 
 
 def cloudfraction(cf, Nsmooth=10, ax=None):

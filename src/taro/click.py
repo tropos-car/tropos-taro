@@ -293,8 +293,8 @@ def ql_quality(input_files: list, output_path: str, skip_exists:bool, config: di
                 continue
 
             ds_l1b = xr.load_dataset(fn)
-            fig, axs = plt.subplots(3, 1, figsize=(10, 12), constrained_layout=True,
-                                    gridspec_kw={"height_ratios": [2, 1, 2]})
+            fig, axs = plt.subplots(4, 1, figsize=(10, 12), constrained_layout=True,
+                                    gridspec_kw={"height_ratios": [5, 2, 1, 5]})
 
             pl_status, (ax_s1, ax_s2) = ds_l1b.quicklooks.status(ax=axs[0])
             ds_l1b.quicklooks.quality_range_dhi2ghi(ax=axs[1], ratio=True, kwargs={'alpha': 0.5})
@@ -304,7 +304,10 @@ def ql_quality(input_files: list, output_path: str, skip_exists:bool, config: di
             axs[1].legend(bbox_to_anchor=(1, 1))
             axs[1].set_ylim([0.2, 1.6])
 
-            pl_flags = ds_l1b.quicklooks.quality_flags(ax=axs[2], freq='15min')
+            ds_l1b.quicklooks.solar_at_night(ax=axs[2])
+            axs[2].legend(bbox_to_anchor=(1, 1))
+
+            pl_flags = ds_l1b.quicklooks.quality_flags(ax=axs[3], freq='15min')
 
             os.makedirs(os.path.dirname(outfile), exist_ok=True)
             fig.savefig(outfile, dpi=dpi, bbox_inches='tight')

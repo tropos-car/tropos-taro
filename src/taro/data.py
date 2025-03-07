@@ -22,7 +22,7 @@ def _parse_unit(unit):
     if unit == "%":
         return ''
     # add ^ before numbers
-    unit = re.sub("-?[0-9]","^\g<0>", unit)
+    unit = re.sub(r"-?[0-9]",r"^\g<0>", unit)
     return unit
 
 def _parse_quantity(unit):
@@ -222,7 +222,7 @@ def to_l1b(ds_l1a, resolution, *, config=None):
     for var in flx_vars:
         if "longwave" in ds_l1b[var].attrs["standard_name"]:
             continue
-        dark = np.nanpercentile(ds_l1b[var].values[szen>80],10)
+        dark = np.nanmedian(ds_l1b[var].values[szen>100])
         ds_l1b[var].values = ds_l1b[var].values - dark
         ds_l1b[var].attrs.update({
             "dark_offset": dark,
