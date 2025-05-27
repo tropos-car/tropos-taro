@@ -220,6 +220,11 @@
     "device": "Pyranometer ML-01, Eko Instruments",
     "station": "TARO-OSCM (Cape Verde)"
   },
+  "A202500094": {
+    "serial": "S25003159",
+    "device": "Pyranometer MS-80SH, Eko Instruments",
+    "station": "TARO-OSCM (Cape Verde)"
+  },
   // TARO-Melpitz
   "A202200091": {
     "serial": "40032",

@@ -110,5 +110,8 @@
   },
   "2025-02-01":{ // 2024 Lindenberg calibration last missing calibration redone
     "A202200023": [7.127,0.1]
+  },
+  "2025-02-12":{ // New serial MS80SH
+    "A202500094": [11.05,0.1]
   }
 }

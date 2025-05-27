@@ -1,0 +1,225 @@
+'CR1000X Series Datalogger
+'Date: 2025-05-26
+'Program author: Jonas Witthuhn
+
+'Declare Constants
+'=================
+' Sensor Channels
+Const Channel_MS57 = 1 'Diff
+Const Channel_MS80_global = 4 'Diff
+Const Channel_MS80_diffuse = 3 'Diff
+Const Channel_ML01 = 8 'Diff
+Const Channel_MS21 = 5 'Diff
+Const Channel_T_MS57 = 3 'SE
+Const Channel_T_MS21 = 6 'Diff
+Const Com_MS80SH = ComC7
+Const Add_MS80SH = 59 ' Last two digits of serial number S25003159
+
+' NTP time server
+Const timeserv  = "192.168.1.200"
+' STR22 Communications
+Const CR=CHR(13)' non printable character "carriage return"
+Const TrackerMR="MR"&CR ' request current tracking angle
+Const TrackerTM="TM"&CR ' request current time
+Const TrackerCR="CR"&CR ' request calculated tracking angle
+Const TrackerLO="LO"&CR ' request location info
+
+'Declare Private Variables
+'=========================
+Dim Rs_Rf_ratio ' Sensor- to Reference-Resistor ratio for PT100 measurements
+
+'Declare Public Variables
+'========================
+Public ResultCode(6)  As Long 'Communication code 
+Public MS80SH_calib(5) As Float 
+Public MS80SH_calibdate As Long
+Public MS80SH_meas(10) As Float
+Public MS80SH_alert(2) As Long
+
+Public Timeoffset As Long ' NTP time offset
+Public PTemp : Units PTemp = degC ' CR1000X Panel temperature
+Public Batt_volt : Units Batt_volt = V ' Logger Battery Voltage
+' STR-22/21 communications
+Public Response As String *50 ' STR-22 serial output
+Public STRtime(6) ' Store time requested from STR-22
+'Sensor Tempartures
+Public T_MS57 : Units T_MS57 = degC
+Public T_MS21 : Units T_MS21 = degC
+'Public Variable Arrays
+Public TimeCR(9) ' stores logger real time clock value
+Public RadMes(5) ' stores MS-57, 2xMS-80, ML01, MS21 sample voltages
+Public WS300Data(19) ' stores buffer 0,1,2,3, and 4 of WS300-UMB
+Public VentilatorPulse(3) ' Frequency of MV01/CVF3 Ventilators
+
+'Declare Alias and Units
+'=======================
+' Ventilators
+Alias VentilatorPulse(1) = MS80_global_pulse : Units MS80_global_pulse = Hz
+Alias VentilatorPulse(2) = MS80_diffuse_pulse : Units MS80_diffuse_pulse = Hz
+Alias VentilatorPulse(3) = MS21_pulse : Units MS21_pulse = Hz
+' Radiation
+Alias RadMes(1) = MS57 : Units MS57 = mV
+Alias RadMes(2) = MS80_global : Units MS80_global = mV
+Alias RadMes(3) = MS80_diffuse : Units MS80_diffuse = mV
+Alias RadMes(4) = ML01 : Units ML01 = mV
+Alias RadMes(5) = MS21 : Units MS21 = mV
+Alias MS80SH_meas(1) = MS80SH_corrected : Units MS80SH_corrected = Wm-2
+Alias MS80SH_meas(4) = T_MS80SH : Units T_MS80SH = degC
+Alias MS80SH_meas(7) = MS80SH_tiltX : Units MS80SH_tiltX = deg
+Alias MS80SH_meas(8) = MS80SH_tiltY : Units MS80SH_tiltY = deg
+Alias MS80SH_meas(10) = MS80SH_raw : Units MS80SH_raw = mV
+Alias MS80SH_alert(1) = MS80SH_alert_humidity
+Alias MS80SH_alert(2) = MS80SH_alert_heating
+Alias ResultCode(5) = MS80SH_comm_code_measurements
+Alias ResultCode(6) = MS80SH_comm_code_alert
+
+
+' Meteorologie
+Alias WS300Data(1) = actAirT : Units actAirT = degC 
+Alias WS300Data(2) = actRelH : Units actRelH = %
+Alias WS300Data(3) = actDewP : Units actDewP = degC
+Alias WS300Data(4) = absAirP : Units absAirP = hPa
+Alias WS300Data(5) = relAirP : Units relAirP = hPa
+Alias WS300Data(6) = minAirT : Units minAirT = degC
+Alias WS300Data(7) = maxAirT : Units maxAirT = degC
+Alias WS300Data(8) = avgAirT : Units avgAirT = degC
+Alias WS300Data(9) = avgRelH : Units avgRelH = %
+Alias WS300Data(10) = minRelH : Units minRelH = %
+Alias WS300Data(11) = maxRelH : Units maxRelH = %
+Alias WS300Data(12) = minRelAirP : Units minRelAirP = hPa
+Alias WS300Data(13) = maxRelAirP : Units maxRelAirP = hPa
+Alias WS300Data(14) = avgRelAirP : Units avgRelAirP = hPa
+Alias WS300Data(15) = minAbsH : Units minAbsH = g m-3
+Alias WS300Data(16) = maxAbsH : Units maxAbsH = g m-3
+Alias WS300Data(17) = avgAbsH : Units avgAbsH = g m-3
+Alias WS300Data(18) = actWetBT : Units actWetBT = degC
+Alias WS300Data(19) = actSpecEnth : Units actSpecEnth = kJ kg-1
+
+Sub convert_string32 (register_data(16), str As String)
+  ' Convert D300 string32 register data to String
+  Dim i
+  str = ""
+  For i=1 To 16
+    str = str + CHR((register_data(i) AND (2^8-1)))
+    str = str + CHR(((register_data(i) AND ((2^8-1)<<8))>>8))
+  Next i
+EndSub
+
+Sub convert_u64_to_datetime(register_data(4), datestr As String)
+  Dim date As Long
+  Dim tyear,tmonth,tday
+  date = register_data(3)<<16 OR register_data(4)
+  datestr = ""
+  tyear = Floor(date / 10000)
+  tmonth = Floor((date - (tyear*10000))/100)
+  tday = date - tmonth*100 - tyear*10000
+  datestr = datestr + FormatLong(tyear,"%4d") + "-"
+  datestr = datestr + FormatLong(tmonth,"%02d") + "-"
+  datestr = datestr + FormatLong(tday,"%02d")
+EndSub
+
+
+
+'Define Data Tables
+'==================
+DataTable(CR1000Status,1,-1)
+  DataInterval(0,60,Min,1)
+  Sample(1,PTemp,FP2)
+  Sample(6,TimeCR(),FP2)
+EndTable
+
+DataTable(Radiation,1,-1)
+  DataInterval(0,0,mSec,1) 'same as Scan interval
+  'TableFile("CRD:Radiation.dat",64,-1,0,1,Day,0,0) ' backup daylie files on SDCard
+  Sample(5,RadMes(),FP2)
+  Sample(1,MS80SH_raw,FP2)
+  Sample(1,T_MS57,FP2)
+  Sample(1,T_MS21,FP2)
+  Sample(1,T_MS80SH,FP2)
+  Sample(2,ResultCode(5),FP2)
+EndTable
+
+DataTable(Meteorologie,1,-1)
+  'TableFile("CRD:Meteorologie.dat",64,-1,0,1,Day,0,0) ' backup daylie files on SDCard
+  DataInterval(0,1,Min,1)
+  Average(19,WS300Data(),FP2,0)
+EndTable
+
+DataTable(SensorStatus,1,-1)
+  'TableFile("CRD:SensorStatus.dat",64,-1,0,1,Day,0,0) ' backup daylie files on SDCard
+  DataInterval(0,10,Min,1)
+  Average(1,T_MS57,FP2,0)
+  Average(1,T_MS21,FP2,0)
+  Average(3,VentilatorPulse(),FP2,0)
+  Maximum(2,MS80SH_alert(),FP2,0,0)
+EndTable
+
+'=======================================================================
+'Main Program
+'============
+
+BeginProg
+  ' Sync time at Program Start and then every 15min
+  ' see SlowSequence 2
+  Timeoffset = NetworkTimeProtocol(timeserv,0,50)
+  
+  ' Set Serial Port For MS-80SH
+  SerialOpen (Com_MS80SH,19200,2,0,50,3)
+  
+  ModbusClient (ResultCode(2),Com_MS80SH,19200,Add_MS80SH,4,MS80SH_calib(),183,4,3,1000,2)
+  ModbusClient (ResultCode(3),Com_MS80SH,19200,Add_MS80SH,4,MS80SH_calib(5),193,1,3,1000,2)
+  ModbusClient (ResultCode(4),Com_MS80SH,19200,Add_MS80SH,4,MS80SH_calibdate,191,1,3,1000,2)
+
+	Scan (200,mSec,0,0)
+     ModbusClient (ResultCode(5),Com_MS80SH,19200,Add_MS80SH,4,MS80SH_meas(),3,10,3,1000,2)
+     ModbusClient (ResultCode(6),Com_MS80SH,19200,Add_MS80SH,4,MS80SH_alert(),27,2,3,1000,2)
+
+    ' MS57, MS80, ML01
+    ' Sampling Time = (0.45ms settling) + (0.25ms integration) = 0.7ms
+		VoltDiff(MS57, 1, mV200, Channel_MS57, False, 450, 250, 1, 0)
+		VoltDiff(MS80_global, 1, mV200, Channel_MS80_global, False, 450, 250, 1, 0)
+		VoltDiff(MS80_diffuse, 1, mV200, Channel_MS80_diffuse, False, 450, 250, 1, 0)
+		VoltDiff(ML01, 1, mV200, Channel_ML01, False, 450, 250, 1, 0)
+		' MS21
+    ' Sampling Time = (3ms settling) + (0.25ms integration) = 3.25ms
+		VoltDiff(MS21, 1,mV200, Channel_MS21, False, 3000, 250, 1, 0)
+
+		'Sensor temperatures
+		'Temperature CGR4
+		' Sampling time: 2 * 2* ((0.45ms settling) + (0.25ms integration)) = 2.8ms
+    BrHalf4W(Rs_Rf_ratio,1,AutoRange,AutoRange,Channel_T_MS21,Vx3,1,1000,False,False ,450,250,15,0)
+    PRTCalc(T_MS21,1,Rs_Rf_ratio,4,1,0)
+    'Temperature MS-56
+    ' Sampling time: 2* 2 * 2* ((0.45ms settling) + (0.25ms integration)) = 5.6ms
+    BrHalf3W(Rs_Rf_ratio,1,AutoRange,Channel_T_MS57,Vx1,1,2100,False,450,250,15,0)
+    PRTCalc(T_MS57,1,Rs_Rf_ratio,4,1,0)
+    
+    'tacho
+     PulseCount(MS21_pulse,1,C1,1,1,1.0,0)
+     PulseCount(MS80_global_pulse,1,C2,1,1,1.0,0)
+     PulseCount(MS80_diffuse_pulse,1,C3,1,1,1.0,0)
+		
+		CallTable Radiation
+		CallTable SensorStatus
+	NextScan
+	
+  '======= Scan Weather Station, Suntracker, Logger  ====
+  SlowSequence
+  Scan(10,Sec,1,0)
+    ' internal Parameter
+    PanelTemp (PTemp,15000)
+		Battery(Batt_volt)
+    'get WS300 measurements
+    SDI12Recorder(WS300Data(),C5,"0","C!",1,0)    
+
+    CallTable Meteorologie
+    CallTable CR1000Status
+  NextScan
+  
+  '========= Sync Time ===============
+  SlowSequence
+  Scan(1,Min,1,0)
+     Timeoffset = NetworkTimeProtocol(timeserv,0,50)  
+  NextScan
+
+EndProg
