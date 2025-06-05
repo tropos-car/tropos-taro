@@ -21,6 +21,8 @@ def _parse_unit(unit):
     unit = str(unit)
     if unit == "%":
         return ''
+    if unit == "nan":
+        return ''
     # add ^ before numbers
     unit = re.sub(r"-?[0-9]",r"^\g<0>", unit)
     return unit
