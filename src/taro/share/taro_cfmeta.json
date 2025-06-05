@@ -302,6 +302,29 @@
         "zlib": true
       }
     },
+    "sensor_tilt": {
+      "type": "u2",
+      "attributes": {
+        "standard_name": "sensor_zenith_angle",
+        "units": "degree",
+        "scale_factor": 0.1,
+        "add_offset": -360,
+        "valid_range": [
+          0,7200
+        ],
+        "_FillValue": 65535,
+        "zlib": true
+      }
+    },
+    "sensor_status": {
+      "type": "u2",
+      "attributes":{
+        "units": "",
+        "standard_name": "status_flag",
+        "_FillValue": 65535,
+        "zlib":true
+      }
+    },
     "szen": {
       "type": "u2",
       "attributes": {
