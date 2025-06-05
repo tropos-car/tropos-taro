@@ -220,16 +220,16 @@ def to_l1b(ds_l1a, resolution, *, config=None):
         for key in ['szen', 'sazi', 'esd']:
             ds_l1b[key].attrs.update(vattrs[key])
 
-    # x. correct dark current
-    for var in flx_vars:
-        if "longwave" in ds_l1b[var].attrs["standard_name"]:
-            continue
-        dark = np.nanmedian(ds_l1b[var].values[szen>100])
-        ds_l1b[var].values = ds_l1b[var].values - dark
-        ds_l1b[var].attrs.update({
-            "dark_offset": dark,
-            "dark_offset_units":ds_l1b[var].attrs['units']
-        })
+    # # x. correct dark current
+    # for var in flx_vars:
+    #     if "longwave" in ds_l1b[var].attrs["standard_name"]:
+    #         continue
+    #     dark = np.nanmedian(ds_l1b[var].values[szen>100])
+    #     ds_l1b[var].values = ds_l1b[var].values - dark
+    #     ds_l1b[var].attrs.update({
+    #         "dark_offset": dark,
+    #         "dark_offset_units":ds_l1b[var].attrs['units']
+    #     })
 
     # 1. calibrate flux vars
     for var in flx_vars:
@@ -267,7 +267,7 @@ def to_l1b(ds_l1a, resolution, *, config=None):
             })
         else:
             ds_l1b[var].values = ds_l1b[var].values*cfac
-            ds_l1b[var].values[ds_l1b[var].values < 0] = 0.
+            # ds_l1b[var].values[ds_l1b[var].values < 0] = 0.
             ds_l1b[var].attrs.update({
                 "calibration_function": "flux (W m-2) = flux (V) * calibration_factor (W m-2 V-1)",
             })
@@ -281,7 +281,7 @@ def to_l1b(ds_l1a, resolution, *, config=None):
             "calibration_date": cdate,
         })
         scale_factor = 1e-4
-        add_offset = 0.
+        add_offset = -10.
         valid_range = np.array([0, 2000])  # valid range in data units W m-2
         valid_range = ((valid_range - add_offset)/scale_factor).astype(int)
         vencode = assoc_in(vencode, [var,'valid_range'],list(valid_range))
