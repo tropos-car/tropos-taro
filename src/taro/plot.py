@@ -531,14 +531,11 @@ class TAROQuicklooks:
 
         dsp = self._filter_device(standard_names=snames)
         szen = self._filter_device(standard_names=SNAMES.szen)
-        for var in szen:
-            szen = szen[var]
-            break
 
-        dsp = dsp.where(szen>100)
+        dsp = dsp.where(self.ds.szen>100)
 
         for var in dsp:
-            F = dsp[var] # + dsp[var].attrs["dark_offset"]*1e6/dsp[var].attrs["calibration_factor"]
+            F = dsp[var] #+ dsp[var].attrs["dark_offset"]*1e6/dsp[var].attrs["calibration_factor"]
             pl = ax.plot(dsp.time,F,label=var)
         ax.legend()
         ax.grid(True)
