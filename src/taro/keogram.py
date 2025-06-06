@@ -93,7 +93,11 @@ def make_keogram(
     # setup filling slice
     filling_slice = Image.new("RGB", (2 * int(1 / out_scale), 2 * radius), color=fill_color)
 
-    for dt in date_filled:
+    szen,hangle = sp.sun_angles(date_filled, lat=latitude, lon=longitude, units=sp.units.DEG)
+    for i,dt in enumerate(date_filled):
+        if szen[i]>100:
+            continue
+        
         if dt not in img_dates:
             keogram_image = concat_images(keogram_image, filling_slice)
             continue
@@ -106,8 +110,7 @@ def make_keogram(
                 cimage = cimage.transpose(Image.FLIP_LEFT_RIGHT)
 
             # rotate into the sun
-            _, hangle = sp.sun_angles(dt, lat=latitude, lon=longitude, units=sp.units.DEG)
-            cimage = cimage.rotate(angle_offset + hangle)
+            cimage = cimage.rotate(angle_offset + hangle[i])
 
             # crop to slice
             img_width, img_height = cimage.size
