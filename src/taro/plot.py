@@ -124,9 +124,10 @@ class TAROQuicklooks:
         for var in dsp:
             if device:
                 device = dsp[var].attrs["device"].split(',')[0]
-                device = re.sub(r"\s+", "\n", device)
+                # device = re.sub(r"\s+", "\n", device)
+                device = device.split()[1]
                 id = dsp[var].attrs["troposID"]
-                varlabel = f"{label}\n{device}\n{id}"
+                varlabel = f"{label} - {device}\n{id}"
             else:
                 varlabel = label
             values = dsp[var].values if unit is None else (dsp[var].values*Unit(dsp[var].attrs['units'])).to(unit).value
@@ -154,7 +155,14 @@ class TAROQuicklooks:
         dsp = self._filter_device(ids=ids, standard_names=[SNAMES.dni])
         ax.set_prop_cycle(color=CMAPS.dni(np.linspace(0.9, 0.1, len(dsp.keys()))))
         for var in dsp:
-            label = r"$\mu_0$DNI, "+self.ds[var].attrs["device"] if device else r"$\mu_0$DNI"
+            label = r"$\mu_0$DNI"
+            if device:
+                device = dsp[var].attrs["device"].split(',')[0]
+                # device = re.sub(r"\s+", "\n", device)
+                device = device.split()[1]
+                id = dsp[var].attrs["troposID"]
+                label = f"{label} - {device}\n{id}"
+                
             pl, = ax.plot(self.time, self.ds[var]*self.mu0, label=label, **kwargs)
             plots.append(pl)
 
@@ -460,9 +468,10 @@ class TAROQuicklooks:
         for i, var in enumerate(dsp):
             if labels is None:
                 device = dsp[var].attrs["device"].split(',')[0]
-                device = re.sub(r"\s+", "\n", device)
+                # device = re.sub(r"\s+", "\n", device)
+                device = device.split()[1]
                 id = dsp[var].attrs["troposID"]
-                label = f"{device}\n{id}\n{var}"
+                label = f"{var}\n{device}\n{id}"
             else:
                 label = labels[i]
             ax.annotate(

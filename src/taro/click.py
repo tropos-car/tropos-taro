@@ -243,7 +243,7 @@ def ql_data(input_files, output_path, skip_exists, config,dpi):
 
             ds_l1b = xr.load_dataset(fn)
             fig, axs = plt.subplots(2, 1, figsize=(8, 8))
-            plots = ds_l1b.quicklooks.flux(ax=axs[0])
+            plots = ds_l1b.quicklooks.flux(ax=axs[0], device=True)
             axs[0].set_ylim([-10, 1310])
             pl, (ax, pax, rax) = ds_l1b.quicklooks.meteorology(
                 ax=axs[1],
