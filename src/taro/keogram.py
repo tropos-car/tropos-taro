@@ -81,9 +81,11 @@ def make_keogram(
     # complete dates
     if whole_day:
         sdate = np.datetime64(img_dates[0]).astype("datetime64[D]")
-        date_filled = pd.date_range(sdate, sdate + np.timedelta64(1, 'D'), freq=freq)
+        edate = sdate + np.timedelta64(1, 'D')
     else:
-        date_filled = pd.date_range(img_dates[0], img_dates[-1], freq=freq)
+        sdate = img_dates[0]
+        edate = img_dates[-1]
+    date_filled = pd.date_range(sdate, edate, freq=freq)
 
     # analyze scale of slices
     with Image.open(img_files[0]) as cimage:
@@ -94,10 +96,12 @@ def make_keogram(
     filling_slice = Image.new("RGB", (2 * int(1 / out_scale), 2 * radius), color=fill_color)
 
     szen,hangle = sp.sun_angles(date_filled, lat=latitude, lon=longitude, units=sp.units.DEG)
+    mask = szen<100
+    date_filled = date_filled[mask]
+    hangle = hangle[mask]
+    szen = szen[mask]
+
     for i,dt in enumerate(date_filled):
-        if szen[i]>100:
-            continue
-        
         if dt not in img_dates:
             keogram_image = concat_images(keogram_image, filling_slice)
             continue
@@ -120,7 +124,7 @@ def make_keogram(
 
             # attach to keogram
             keogram_image = concat_images(keogram_image, cimage)
-    return keogram_image
+    return keogram_image, date_filled[0], date_filled[-1]
 
 
 def plot_keogram(keogram_image, sdate, edate, ax=None, newfig=False):

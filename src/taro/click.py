@@ -721,7 +721,7 @@ def asi16_keogram(
         finfo = parse.parse(config['asi16_out'], os.path.basename(fn)).named
         img_dates.append(finfo["dt"])
 
-    keogram = taro.keogram.make_keogram(
+    keogram,sdate,edate = taro.keogram.make_keogram(
         img_files=images,
         img_dates=img_dates,
         longitude=longitude,
@@ -749,8 +749,8 @@ def asi16_keogram(
 
     fig, ax_keo = taro.keogram.plot_keogram(
         keogram,
-        sdate=img_dates[0],
-        edate=img_dates[-1],
+        sdate=sdate,
+        edate=edate,
         ax=ax_keo
     )
     fig.savefig(keogram_filename, dpi=300, bbox_inches='tight')
