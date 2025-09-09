@@ -12,6 +12,7 @@ import datetime as dt
 import importlib.resources
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 import taro
 import taro.utils
@@ -234,6 +235,7 @@ def ql_data(input_files, output_path, skip_exists, config,dpi):
 
     with click.progressbar(input_files, label='Make daily data quicklooks:') as files:
         for fn in files:
+            tz_applied = False
             fname_info = parse.parse(
                 config["fname_out"],
                 os.path.basename(fn)
@@ -252,9 +254,44 @@ def ql_data(input_files, output_path, skip_exists, config,dpi):
                 continue
 
             ds_l1b = xr.load_dataset(fn)
+
+            # load additional data based on timezone information
+            if config["tzinfo"] is not None:
+                offset = taro.utils.tz_offset(config["tzinfo"])
+                add_date = (np.datetime64(fname_info["dt"]) - np.timedelta64(offset,"s")).astype("datetime64[D]")
+                add_date = pd.to_datetime(add_date)
+                add_file = fn.replace(f"{fname_info['dt']:%Y-%m-%d}",f"{add_date:%Y-%m-%d}")
+                print(add_file)
+                if os.path.exists(add_file):
+                    print(add_file)
+                    add_ds = xr.load_dataset(add_file)
+                    ds_l1b = taro.futils.merge_ds(add_ds,ds_l1b)
+                    # add time offset
+                    ds_l1b = ds_l1b.assign_coords({"time":("time",ds_l1b.time.values+np.timedelta64(offset,"s"))})
+                    # select day for local time
+                    ds_l1b = ds_l1b.sel(time=f"{fname_info['dt']:%Y-%m-%d}")
+                    tz_applied = True
+
+
             fig, axs = plt.subplots(2, 1, figsize=(8, 8))
             plots = ds_l1b.quicklooks.flux(ax=axs[0], device=True)
             axs[0].set_ylim([-10, 1310])
+
+            # add local time label if timezone is applied and add UTC information
+            if tz_applied:
+                axs[0].set_xlabel(f"time ({config['tzinfo']} {taro.utils.offset_hhmm(offset)})")
+                sax = axs[0].secondary_xaxis(
+                    "top", 
+                    (lambda x: mdates.date2num(pd.to_datetime(np.array(mdates.num2date(x)).astype("datetime64")-np.timedelta64(offset,"s"))),
+                     lambda x: mdates.date2num(pd.to_datetime(np.array(mdates.num2date(x)).astype("datetime64")+np.timedelta64(offset,"s")))
+                     )
+                    )
+                sax.set_xlabel("time (UTC)")
+                sax.set_xticks(mdates.date2num(pd.to_datetime(np.array(mdates.num2date(axs[0].get_xticks())).astype("datetime64")-np.timedelta64(offset,"s"))))
+                sax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(ax.xaxis.get_major_locator()))
+
+
+
             pl, (ax, pax, rax) = ds_l1b.quicklooks.meteorology(
                 ax=axs[1],
                 legend=False,
@@ -263,8 +300,8 @@ def ql_data(input_files, output_path, skip_exists, config,dpi):
                       "rh": None}
             )
             ax.legend(handles=pl, loc='lower right')
-
-
+            if tz_applied:
+                ax.set_xlabel(f"time ({config['tzinfo']} {taro.utils.offset_hhmm(offset)})")
 
             os.makedirs(os.path.dirname(outfile), exist_ok=True)
             fig.savefig(outfile, dpi=dpi, bbox_inches='tight')
@@ -303,6 +340,26 @@ def ql_quality(input_files: list, output_path: str, skip_exists:bool, config: di
                 continue
 
             ds_l1b = xr.load_dataset(fn)
+
+            # load additional data based on timezone information
+            tz_applied = False
+            if config["tzinfo"] is not None:
+                offset = taro.utils.tz_offset(config["tzinfo"])
+                add_date = (np.datetime64(fname_info["dt"]) - np.timedelta64(offset,"s")).astype("datetime64[D]")
+                add_date = pd.to_datetime(add_date)
+                add_file = fn.replace(f"{fname_info['dt']:%Y-%m-%d}",f"{add_date:%Y-%m-%d}")
+                print(add_file)
+                if os.path.exists(add_file):
+                    print(add_file)
+                    add_ds = xr.load_dataset(add_file)
+                    ds_l1b = taro.futils.merge_ds(add_ds,ds_l1b)
+                    # add time offset
+                    ds_l1b = ds_l1b.assign_coords({"time":("time",ds_l1b.time.values+np.timedelta64(offset,"s"))})
+                    # select day for local time
+                    ds_l1b = ds_l1b.sel(time=f"{fname_info['dt']:%Y-%m-%d}")
+                    tz_applied = True
+
+
             fig, axs = plt.subplots(4, 1, figsize=(10, 12), constrained_layout=True,
                                     gridspec_kw={"height_ratios": [5, 2, 1, 5]})
 
@@ -318,6 +375,23 @@ def ql_quality(input_files: list, output_path: str, skip_exists:bool, config: di
             axs[2].legend(bbox_to_anchor=(1, 1))
 
             pl_flags = ds_l1b.quicklooks.quality_flags(ax=axs[3], freq='15min')
+
+
+            # add local time label if timezone is applied and add UTC information
+            if tz_applied:
+                for ax in axs:
+                    ax.set_xlabel(f"time ({config['tzinfo']} {taro.utils.offset_hhmm(offset)})")
+                # UTC only on top    
+                sax = axs[0].secondary_xaxis(
+                    "top", 
+                    (lambda x: mdates.date2num(pd.to_datetime(np.array(mdates.num2date(x)).astype("datetime64")-np.timedelta64(offset,"s"))),
+                     lambda x: mdates.date2num(pd.to_datetime(np.array(mdates.num2date(x)).astype("datetime64")+np.timedelta64(offset,"s")))
+                     )
+                    )
+                sax.set_xlabel("time (UTC)")
+                sax.set_xticks(mdates.date2num(pd.to_datetime(np.array(mdates.num2date(axs[0].get_xticks())).astype("datetime64")-np.timedelta64(offset,"s"))))
+                sax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(ax.xaxis.get_major_locator()))
+
 
             os.makedirs(os.path.dirname(outfile), exist_ok=True)
             fig.savefig(outfile, dpi=dpi, bbox_inches='tight')
@@ -920,7 +994,40 @@ def wiser_quicklook(input_files,
                 continue
 
             ds = xr.load_dataset(fn)
+
+
+            # load additional data based on timezone information
+            tz_applied = False
+            if config["tzinfo"] is not None:
+                offset = taro.utils.tz_offset(config["tzinfo"])
+                add_date = (np.datetime64(fname_info["dt"]) - np.timedelta64(offset,"s")).astype("datetime64[D]")
+                add_date = pd.to_datetime(add_date)
+                add_file = fn.replace(f"{fname_info['dt']:%Y-%m-%d}",f"{add_date:%Y-%m-%d}")
+                if os.path.exists(add_file):
+                    add_ds = xr.load_dataset(add_file)
+                    ds = taro.futils.merge_ds(add_ds,ds)
+                    # add time offset
+                    ds = ds.assign_coords({"time":("time",ds.time.values+np.timedelta64(offset,"s"))})
+                    # select day for local time
+                    ds = ds.sel(time=f"{fname_info['dt']:%Y-%m-%d}")
+                    tz_applied = True
+
+
             fig,axs = taro.plot.wiser_quicklook(ds)
+
+            # add local time label if timezone is applied and add UTC information
+            if tz_applied:
+                axs[1, 0].set_xlabel(f"time ({config['tzinfo']} {taro.utils.offset_hhmm(offset)})")
+                # UTC only on top    
+                sax = axs[1,0].secondary_xaxis(
+                    "bottom", 
+                    (lambda x: mdates.date2num(pd.to_datetime(np.array(mdates.num2date(x)).astype("datetime64")-np.timedelta64(offset,"s"))),
+                     lambda x: mdates.date2num(pd.to_datetime(np.array(mdates.num2date(x)).astype("datetime64")+np.timedelta64(offset,"s")))
+                     )
+                    )
+                sax.set_xlabel("time (UTC)")
+                sax.set_xticks(mdates.date2num(pd.to_datetime(np.array(mdates.num2date(axs[0].get_xticks())).astype("datetime64")-np.timedelta64(offset,"s"))))
+                sax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(axs[1,0].xaxis.get_major_locator()))
 
             os.makedirs(os.path.dirname(outfile), exist_ok=True)
             fig.savefig(outfile, dpi=dpi, bbox_inches='tight')

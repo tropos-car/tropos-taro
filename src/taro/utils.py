@@ -1,8 +1,10 @@
 import os
+from zoneinfo import ZoneInfo
 import logging
 import numpy as np
 import pandas as pd
 import xarray as xr
+import datetime as dt
 import importlib.resources
 from toolz import keyfilter
 import jstyleson as json
@@ -33,6 +35,22 @@ def to_datetime64(time, epoch=EPOCH_JD_2000_0):
     jd = sp.to_julday(time, epoch=epoch)
     jdms = np.int64(86_400_000*jd)
     return (epoch + jdms.astype('timedelta64[ms]')).astype("datetime64[ns]")
+
+def tz_offset(zone: str, tz_reference: dt.datetime | None = None) -> int:
+    if tz_reference is None:
+        tz_reference = dt.datetime.now(dt.timezone.utc)
+    elif tz_reference.tzinfo is None:
+        tz_reference = tz_reference.replace(tzinfo=dt.timezone.utc)
+    
+    tz_target = ZoneInfo(zone)
+    offset = tz_reference.astimezone(tz_target).utcoffset()
+    return int(offset.total_seconds())
+
+def offset_hhmm(seconds: int) -> str:
+    sign = "+" if seconds >= 0 else "-"
+    secs = abs(seconds)
+    hh, mm = divmod(secs // 60, 60)
+    return f"{sign}{hh:02d}:{mm:02d}"
 
 def round_to(base, x):
     """ Round x to a given base
