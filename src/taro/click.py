@@ -925,8 +925,8 @@ def asi16_keogram2(
             whole_day = (sdate,edate)
 
         keogram,sdate,edate = taro.keogram.make_keogram(
-            img_files=images_day,
-            img_dates=img_day_dates,
+            img_files=list(images_day),
+            img_dates=list(img_day_dates),
             longitude=longitude,
             latitude=latitude,
             radius_scale=radius_scale,
