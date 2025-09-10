@@ -910,82 +910,83 @@ def asi16_keogram2(
     img = np.array(img)
 
     udays = np.unique(img_dates.astype("datetime64[D]"))
-    for day in udays:
-        offset = 0
-        if config["tzinfo"]:
-            offset = taro.utils.tz_offset(config["tzinfo"])
-        sdate = day.astype("datetime64[ns]") - np.timedelta64(offset,"s")
-        edate = sdate + np.timedelta64(1,"D")
-        day_mask = img_dates.astype("datetime64[D]") >= sdate
-        day_mask *= img_dates.astype("datetime64[D]") < edate
-        img_day_dates = img_dates[day_mask]
-        images_day = img[day_mask]
+    with click.progressbar(udays, label='Make daily keogram:') as udays:
+        for day in udays:
+            offset = 0
+            if config["tzinfo"]:
+                offset = taro.utils.tz_offset(config["tzinfo"])
+            sdate = day.astype("datetime64[ns]") - np.timedelta64(offset,"s")
+            edate = sdate + np.timedelta64(1,"D")
+            day_mask = img_dates.astype("datetime64[D]") >= sdate
+            day_mask *= img_dates.astype("datetime64[D]") < edate
+            img_day_dates = img_dates[day_mask]
+            images_day = img[day_mask]
 
-        if whole_day:
-            whole_day = (sdate,edate)
+            if whole_day:
+                whole_day = (sdate,edate)
 
-        keogram,sdate,edate = taro.keogram.make_keogram(
-            img_files=list(images_day),
-            img_dates=list(img_day_dates),
-            longitude=longitude,
-            latitude=latitude,
-            radius_scale=radius_scale,
-            angle_offset=angle_offset,
-            flip=flip,
-            fill_color=fill_color,
-            whole_day=whole_day
-        )
+            keogram,sdate,edate = taro.keogram.make_keogram(
+                img_files=list(images_day),
+                img_dates=list(img_day_dates),
+                longitude=longitude,
+                latitude=latitude,
+                radius_scale=radius_scale,
+                angle_offset=angle_offset,
+                flip=flip,
+                fill_color=fill_color,
+                whole_day=whole_day
+            )
 
-        if cffile_path is not None:
-            cfdays = np.unique([np.datetime64(sdate,"D"),np.datetime64(edate,"D")])
-            cfpath = os.path.join(cffile_path,"{day:%Y/%m/%Y%m%d}_00000_taro-asi16_{campaign}_cloudcoverage.nc")
+            if cffile_path is not None:
+                cfdays = np.unique([np.datetime64(sdate,"D"),np.datetime64(edate,"D")])
+                cfpath = os.path.join(cffile_path,"{day:%Y/%m/%Y%m%d}_00000_taro-asi16_{campaign}_cloudcoverage.nc")
 
-            dscf = xr.DataArray()
-            dscfempty = True
-            for i,cfday in enumerate(cfdays):
-                if os.path.exists(cfpath.format(day=pd.to_datetime(cfday),campaign=config["campaign"])):
-                    dsc = xr.load_dataset(cfpath.format(day=cfday,campaign=config["campaign"]))
+                dscf = xr.DataArray()
+                dscfempty = True
+                for i,cfday in enumerate(cfdays):
+                    if os.path.exists(cfpath.format(day=pd.to_datetime(cfday),campaign=config["campaign"])):
+                        dsc = xr.load_dataset(cfpath.format(day=cfday,campaign=config["campaign"]))
+                    else:
+                        continue
+                    dscf = xr.concat((dscf,dsc),dim="time")
+                    dscfempty=False
+                if not dscfempty:
+                    cf = dscf.cloudiness.mean(dim="exposure_key", skipna=True).squeeze()
                 else:
-                    continue
-                dscf = xr.concat((dscf,dsc),dim="time")
-                dscfempty=False
-            if not dscfempty:
-                cf = dscf.cloudiness.mean(dim="exposure_key", skipna=True).squeeze()
+                    cffile_path = None
+
+            mpl.use('Agg')
+            if cffile_path is not None:
+                fig = plt.figure(figsize=(10, 7))
+                gs = fig.add_gridspec(nrows=7, ncols=1, wspace=0, hspace=0.05)
+                ax_keo = fig.add_subplot(gs[1:, 0])
+                ax_cf = fig.add_subplot(gs[0, 0], sharex=ax_keo)
+                ax_cf = taro.plot.cloudfraction(cf, Nsmooth=10, ax=ax_cf)
             else:
-                cffile_path = None
+                fig, ax_keo = plt.subplots(1,1, figsize=(10, 6))
 
-        mpl.use('Agg')
-        if cffile_path is not None:
-            fig = plt.figure(figsize=(10, 7))
-            gs = fig.add_gridspec(nrows=7, ncols=1, wspace=0, hspace=0.05)
-            ax_keo = fig.add_subplot(gs[1:, 0])
-            ax_cf = fig.add_subplot(gs[0, 0], sharex=ax_keo)
-            ax_cf = taro.plot.cloudfraction(cf, Nsmooth=10, ax=ax_cf)
-        else:
-            fig, ax_keo = plt.subplots(1,1, figsize=(10, 6))
+            fig, ax_keo = taro.keogram.plot_keogram(
+                keogram,
+                sdate=sdate,
+                edate=edate,
+                ax=ax_keo
+            )
 
-        fig, ax_keo = taro.keogram.plot_keogram(
-            keogram,
-            sdate=sdate,
-            edate=edate,
-            ax=ax_keo
-        )
+            if config["tzinfo"]:
+                # local time only on top    
+                sax = ax_keo.secondary_xaxis(
+                    "top", 
+                    (lambda x: mdates.date2num(pd.to_datetime(taro.utils.dt64_sub_tz_offset(mdates.num2date(x),config["tzinfo"]))),
+                    lambda x: mdates.date2num(pd.to_datetime(taro.utils.dt64_add_tz_offset(mdates.num2date(x),config["tzinfo"])))
+                    )
+                    )
+                sax.set_xlabel(f"time ({config['tzinfo']} {taro.utils.offset_hhmm(offset)})")
+                sax.set_xticks(mdates.date2num(pd.to_datetime(taro.utils.dt64_sub_tz_offset(mdates.num2date(ax_keo.get_xticks()),config["tzinfo"]))))
+                sax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(ax_keo.xaxis.get_major_locator()))
 
-        if config["tzinfo"]:
-            # local time only on top    
-            sax = ax_keo.secondary_xaxis(
-                "top", 
-                (lambda x: mdates.date2num(pd.to_datetime(taro.utils.dt64_sub_tz_offset(mdates.num2date(x),config["tzinfo"]))),
-                 lambda x: mdates.date2num(pd.to_datetime(taro.utils.dt64_add_tz_offset(mdates.num2date(x),config["tzinfo"])))
-                 )
-                )
-            sax.set_xlabel(f"time ({config['tzinfo']} {taro.utils.offset_hhmm(offset)})")
-            sax.set_xticks(mdates.date2num(pd.to_datetime(taro.utils.dt64_sub_tz_offset(mdates.num2date(ax_keo.get_xticks()),config["tzinfo"]))))
-            sax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(ax_keo.xaxis.get_major_locator()))
-
-        keogram_filename = os.path.join(keogram_outpath,f"{day:%Y/%m/%Y-%m-%d}_taro-asi16_{config['campaign']}_keogram.jpg")
-        os.makedirs(os.path.dirname(keogram_filename), exist_ok=True)
-        fig.savefig(keogram_filename, dpi=300, bbox_inches='tight')
+            keogram_filename = os.path.join(keogram_outpath,f"{pd.to_datetime(day):%Y/%m/%Y-%m-%d}_taro-asi16_{config['campaign']}_keogram.jpg")
+            os.makedirs(os.path.dirname(keogram_filename), exist_ok=True)
+            fig.savefig(keogram_filename, dpi=300, bbox_inches='tight')
 
 @cli_asi16.command("test-config")
 @click.argument("image", nargs=1)
