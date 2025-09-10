@@ -421,6 +421,9 @@ def wiser_to_l1a(date, pf, *, config=None, global_attrs=None):
             new = False
         else:
             ds = xr.concat((ds, dst), dim='time')
+    
+    if ds.time.size <3:
+        return None
 
     if new:
         return None

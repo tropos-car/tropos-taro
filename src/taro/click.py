@@ -282,9 +282,12 @@ def ql_data(input_files, output_path, skip_exists, config,dpi):
                 axs[0].set_xlabel(f"time ({config['tzinfo']} {taro.utils.offset_hhmm(offset)})")
                 sax = axs[0].secondary_xaxis(
                     "top", 
-                    (lambda x: mdates.date2num(pd.to_datetime(np.array(mdates.num2date(x)).astype("datetime64")-np.timedelta64(offset,"s"))),
-                     lambda x: mdates.date2num(pd.to_datetime(np.array(mdates.num2date(x)).astype("datetime64")+np.timedelta64(offset,"s")))
+                    ( lambda x: mdates.date2num(pd.to_datetime(taro.utils.dt64_sub_tz_offset(mdates.num2date(x),config["tzinfo"]))),
+                      lambda x: mdates.date2num(pd.to_datetime(taro.utils.dt64_add_tz_offset(mdates.num2date(x),config["tzinfo"])))
                      )
+                    # (lambda x: mdates.date2num(pd.to_datetime(np.array(mdates.num2date(x)).astype("datetime64")-np.timedelta64(offset,"s"))),
+                    #  lambda x: mdates.date2num(pd.to_datetime(np.array(mdates.num2date(x)).astype("datetime64")+np.timedelta64(offset,"s")))
+                    #  )
                     )
                 sax.set_xlabel("time (UTC)")
                 sax.set_xticks(mdates.date2num(pd.to_datetime(np.array(mdates.num2date(axs[0].get_xticks())).astype("datetime64")-np.timedelta64(offset,"s"))))

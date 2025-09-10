@@ -1,4 +1,5 @@
 import os
+from collections.abc import Iterable
 from zoneinfo import ZoneInfo
 import logging
 import numpy as np
@@ -51,6 +52,46 @@ def offset_hhmm(seconds: int) -> str:
     secs = abs(seconds)
     hh, mm = divmod(secs // 60, 60)
     return f"{sign}{hh:02d}:{mm:02d}"
+
+def dt64_add_tz_offset(x, zone: str):
+    offset = np.timedelta64(tz_offset(zone),'s')
+    print()
+    print(x)
+    if isinstance(x, Iterable):
+        if len(x) == 0:
+            return np.array([]).astype("datetime64[us]")
+        # handle if x is nested list
+        if isinstance(x[0], Iterable):
+            dt64 = []
+            for xi in x:
+                dt64.append([ np.datetime64(pd.to_datetime(t).tz_localize(None),"us") for t in xi])
+            dt64 = np.array(dt64)
+        else:
+            dt64 = np.array([ np.datetime64(pd.to_datetime(t).tz_localize(None),"us") for t in x])
+    else:
+        dt64 = np.datetime64(pd.to_datetime(x).tz_localize(None),"us")
+
+    return dt64 + offset
+
+def dt64_sub_tz_offset(x, zone: str):
+    offset = np.timedelta64(tz_offset(zone),'s')
+    print()
+    print(x)
+    if isinstance(x, Iterable):
+        if len(x) == 0:
+            return np.array([]).astype("datetime64[us]")
+        # handle if x is nested list
+        if isinstance(x[0], Iterable):
+            dt64 = []
+            for xi in x:
+                dt64.append([ np.datetime64(pd.to_datetime(t).tz_localize(None),"us") for t in xi])
+            dt64 = np.array(dt64)
+        else:
+            dt64 = np.array([ np.datetime64(pd.to_datetime(t).tz_localize(None),"us") for t in x])
+    else:
+        dt64 = np.datetime64(pd.to_datetime(x).tz_localize(None),"us")
+
+    return dt64 - offset
 
 def round_to(base, x):
     """ Round x to a given base
