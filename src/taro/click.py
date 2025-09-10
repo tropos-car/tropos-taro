@@ -941,13 +941,15 @@ def asi16_keogram2(
             cfpath = os.path.join(cffile_path,"{day:%Y/%m/%Y%m%d}_00000_taro-asi16_{campaign}_cloudcoverage.nc")
 
             dscf = xr.DataArray()
+            dscfempty = True
             for i,cfday in enumerate(cfdays):
                 if os.path.exists(cfpath.format(day=pd.to_datetime(cfday),campaign=config["campaign"])):
                     dsc = xr.load_dataset(cfpath.format(day=cfday,campaign=config["campaign"]))
                 else:
                     continue
                 dscf = xr.concat((dscf,dsc),dim="time")
-            if len(dscf)!=0:
+                dscfempty=False
+            if not dscfempty:
                 cf = dscf.cloudiness.mean(dim="exposure_key", skipna=True).squeeze()
             else:
                 cffile_path = None
