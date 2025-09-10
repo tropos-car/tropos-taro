@@ -805,6 +805,11 @@ def asi16_keogram(
         finfo = parse.parse(config['asi16_out'], os.path.basename(fn)).named
         img_dates.append(finfo["dt"])
 
+    if whole_day:
+        sdate = np.datetime64(img_dates[0]).astype("datetime64[D]")
+        edate = sdate + np.timedelta64(1, 'D')
+        whole_day = (sdate,edate)
+
     keogram,sdate,edate = taro.keogram.make_keogram(
         img_files=images,
         img_dates=img_dates,
@@ -838,6 +843,127 @@ def asi16_keogram(
         ax=ax_keo
     )
     fig.savefig(keogram_filename, dpi=300, bbox_inches='tight')
+
+
+@cli_asi16.command("keogram2")
+@click.argument("images", nargs=-1)
+@click.argument("keogram_filename", nargs=1)
+@click.option("--cffile", type=str, default=None, show_default=True,
+              help="Filename of cloudiness file.")
+@click.option("--lon",type=float, default=None, show_default=True,
+              help="Longitude coordinate (degrees East) of the image. If None, try to parse longitude from config.")
+@click.option("--lat",type=float, default=None, show_default=True,
+              help="Latitude coordinate (degrees North) of the image. If None, try to parse latitude from config.")
+@click.option("-r","--radius-scale",type=float,default=1.,show_default=True,
+              help="Radius ratio to crop the picture.")
+@click.option("-a","--angle-offset", type=float, default=0, show_default=True,
+              help="Static angle to rotate the picture counter-clockwise.")
+@click.option("--flip/--no-flip",help="Flip the image before rotating.")
+@click.option("--fill-color",nargs=3,default=[0,0,0],show_default=True,
+              help="Color of missing images in keogram (R,G,B).")
+@click.option("--whole-day/--no-whole-day",default=False)
+@click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
+              help="Config file - will merge and override the default config.")
+def asi16_keogram2(
+        images: list,
+        keogram_filename: str,
+        cffile: str,
+        lon: float,
+        lat: float,
+        radius_scale: float,
+        angle_offset: float,
+        flip: bool,
+        fill_color: list,
+        whole_day:bool,
+        config: str
+):
+    config = _configure(config)
+
+    if lon is None:
+        if config["coordinates"] is None:
+            warnings.warn("No coordinates in config - proceed with longitude=None")
+            longitude = None
+        else:
+            longitude = config["coordinates"][1]
+    else:
+        longitude = lon
+
+    if lat is None:
+        if config["coordinates"] is None:
+            warnings.warn("No coordinates in config - proceed with latitude=None")
+            latitude = None
+        else:
+            latitude = config["coordinates"][0]
+    else:
+        latitude = lat
+
+    img_dates = []
+    for fn in images:
+        finfo = parse.parse(config['asi16_out'], os.path.basename(fn)).named
+        img_dates.append(finfo["dt"])
+    img_dates = np.array(img_dates)
+
+    udays = np.unique(img_dates.astype("datetime64[D]"))
+    for day in udays:
+        offset = 0
+        if config["tzinfo"]:
+            offset = taro.utils.tz_offset(config["tzinfo"])
+        sdate = day.astype("datetime64[ns]") - np.timedelta64(offset,"s")
+        edate = sdate + np.timedelta64(1,"D")
+        day_mask = img_dates.astype("datetime64[D]") >= sdate
+        day_mask *= img_dates.astype("datetime64[D]") < edate
+        img_day_dates = img_dates[day_mask]
+        images_day = images[day_mask]
+
+        if whole_day:
+            whole_day = (sdate,edate)
+
+        keogram,sdate,edate = taro.keogram.make_keogram(
+            img_files=images_day,
+            img_dates=img_day_dates,
+            longitude=longitude,
+            latitude=latitude,
+            radius_scale=radius_scale,
+            angle_offset=angle_offset,
+            flip=flip,
+            fill_color=fill_color,
+            whole_day=whole_day
+        )
+
+        if cffile is not None:
+            dscf = xr.load_dataset(cffile)
+            cf = dscf.cloudiness.mean(dim="exposure_key", skipna=True).squeeze()
+
+        mpl.use('Agg')
+        if cffile is not None:
+            fig = plt.figure(figsize=(10, 7))
+            gs = fig.add_gridspec(nrows=7, ncols=1, wspace=0, hspace=0.05)
+            ax_keo = fig.add_subplot(gs[1:, 0])
+            ax_cf = fig.add_subplot(gs[0, 0], sharex=ax_keo)
+            ax_cf = taro.plot.cloudfraction(cf, Nsmooth=10, ax=ax_cf)
+        else:
+            fig, ax_keo = plt.subplots(1,1, figsize=(10, 6))
+
+        fig, ax_keo = taro.keogram.plot_keogram(
+            keogram,
+            sdate=sdate,
+            edate=edate,
+            ax=ax_keo
+        )
+
+        if config["tzinfo"]:
+            # local time only on top    
+            sax = ax_keo.secondary_xaxis(
+                "top", 
+                (lambda x: mdates.date2num(pd.to_datetime(taro.utils.dt64_sub_tz_offset(mdates.num2date(x),config["tzinfo"]))),
+                 lambda x: mdates.date2num(pd.to_datetime(taro.utils.dt64_add_tz_offset(mdates.num2date(x),config["tzinfo"])))
+                 )
+                )
+            sax.set_xlabel(f"time ({config['tzinfo']} {taro.utils.offset_hhmm(offset)})")
+            sax.set_xticks(mdates.date2num(pd.to_datetime(taro.utils.dt64_sub_tz_offset(mdates.num2date(ax_keo.get_xticks()),config["tzinfo"]))))
+            sax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(ax_keo.xaxis.get_major_locator()))
+
+        fig.savefig(keogram_filename, dpi=300, bbox_inches='tight')
 
 @cli_asi16.command("test-config")
 @click.argument("image", nargs=1)

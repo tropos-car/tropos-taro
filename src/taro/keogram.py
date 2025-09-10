@@ -80,8 +80,9 @@ def make_keogram(
 
     # complete dates
     if whole_day:
-        sdate = np.datetime64(img_dates[0]).astype("datetime64[D]")
-        edate = sdate + np.timedelta64(1, 'D')
+        sdate, edate = whole_day
+        # sdate = np.datetime64(img_dates[0]).astype("datetime64[D]")
+        # edate = sdate + np.timedelta64(1, 'D')
     else:
         sdate = img_dates[0]
         edate = img_dates[-1]
