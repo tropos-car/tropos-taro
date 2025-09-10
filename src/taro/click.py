@@ -942,7 +942,7 @@ def asi16_keogram2(
 
             dscf = xr.DataArray()
             for i,cfday in enumerate(cfdays):
-                if os.path.exists(cfpath.format(day=cfday,campaign=config["campaign"])):
+                if os.path.exists(cfpath.format(day=pd.to_datetime(cfday),campaign=config["campaign"])):
                     dsc = xr.load_dataset(cfpath.format(day=cfday,campaign=config["campaign"]))
                 else:
                     continue
