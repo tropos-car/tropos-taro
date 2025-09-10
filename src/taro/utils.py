@@ -55,8 +55,6 @@ def offset_hhmm(seconds: int) -> str:
 
 def dt64_add_tz_offset(x, zone: str):
     offset = np.timedelta64(tz_offset(zone),'s')
-    print()
-    print(x)
     if isinstance(x, Iterable):
         if len(x) == 0:
             return np.array([]).astype("datetime64[us]")
@@ -75,8 +73,6 @@ def dt64_add_tz_offset(x, zone: str):
 
 def dt64_sub_tz_offset(x, zone: str):
     offset = np.timedelta64(tz_offset(zone),'s')
-    print()
-    print(x)
     if isinstance(x, Iterable):
         if len(x) == 0:
             return np.array([]).astype("datetime64[us]")

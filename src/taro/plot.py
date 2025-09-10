@@ -2,6 +2,7 @@ import re
 import xarray as xr
 import numpy as np
 import pandas as pd
+from scipy.integrate import trapezoid
 from unitpy import Unit
 import trosat.sunpos as sp
 
@@ -599,7 +600,7 @@ def wiser_quicklook(ds):
         cmap="cividis",
         norm=mcolors.LogNorm(vmin=1e-3, vmax=10)
     )
-    axs[0, 0].plot(ds.time, np.trapz(val.T, ds.wvl, axis=0), color='k')
+    axs[0, 0].plot(ds.time, trapezoid(val.T, ds.wvl, axis=0), color='k')
     axs[0, 0].set_ylim((-10, 1300))
     axs[1, 1].set_xlim((axs[1, 1].get_xlim()[0], 1.05))
     axs[1, 0].set_xlim((ds.time.values[0].astype("datetime64[D]"),
