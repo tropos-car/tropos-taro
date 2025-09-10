@@ -285,12 +285,9 @@ def ql_data(input_files, output_path, skip_exists, config,dpi):
                     ( lambda x: mdates.date2num(pd.to_datetime(taro.utils.dt64_sub_tz_offset(mdates.num2date(x),config["tzinfo"]))),
                       lambda x: mdates.date2num(pd.to_datetime(taro.utils.dt64_add_tz_offset(mdates.num2date(x),config["tzinfo"])))
                      )
-                    # (lambda x: mdates.date2num(pd.to_datetime(np.array(mdates.num2date(x)).astype("datetime64")-np.timedelta64(offset,"s"))),
-                    #  lambda x: mdates.date2num(pd.to_datetime(np.array(mdates.num2date(x)).astype("datetime64")+np.timedelta64(offset,"s")))
-                    #  )
                     )
                 sax.set_xlabel("time (UTC)")
-                sax.set_xticks(mdates.date2num(pd.to_datetime(np.array(mdates.num2date(axs[0].get_xticks())).astype("datetime64")-np.timedelta64(offset,"s"))))
+                sax.set_xticks(mdates.date2num(pd.to_datetime(taro.utils.dt64_sub_tz_offset(mdates.num2date(axs[0].get_xticks()),config["tzinfo"]))))
                 sax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(axs[0].xaxis.get_major_locator()))
 
 
@@ -387,12 +384,12 @@ def ql_quality(input_files: list, output_path: str, skip_exists:bool, config: di
                 # UTC only on top    
                 sax = axs[0].secondary_xaxis(
                     "top", 
-                    (lambda x: mdates.date2num(pd.to_datetime(np.array(mdates.num2date(x)).astype("datetime64")-np.timedelta64(offset,"s"))),
-                     lambda x: mdates.date2num(pd.to_datetime(np.array(mdates.num2date(x)).astype("datetime64")+np.timedelta64(offset,"s")))
+                    (lambda x: mdates.date2num(pd.to_datetime(taro.utils.dt64_sub_tz_offset(mdates.num2date(x),config["tzinfo"]))),
+                     lambda x: mdates.date2num(pd.to_datetime(taro.utils.dt64_add_tz_offset(mdates.num2date(x),config["tzinfo"])))
                      )
                     )
                 sax.set_xlabel("time (UTC)")
-                sax.set_xticks(mdates.date2num(pd.to_datetime(np.array(mdates.num2date(axs[0].get_xticks())).astype("datetime64")-np.timedelta64(offset,"s"))))
+                sax.set_xticks(mdates.date2num(pd.to_datetime(taro.utils.dt64_sub_tz_offset(mdates.num2date(axs[0].get_xticks()),config["tzinfo"]))))
                 sax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(axs[0].xaxis.get_major_locator()))
 
 
@@ -1024,12 +1021,12 @@ def wiser_quicklook(input_files,
                 # UTC only on top    
                 sax = axs[1,0].secondary_xaxis(
                     "bottom", 
-                    (lambda x: mdates.date2num(pd.to_datetime(np.array(mdates.num2date(x)).astype("datetime64")-np.timedelta64(offset,"s"))),
-                     lambda x: mdates.date2num(pd.to_datetime(np.array(mdates.num2date(x)).astype("datetime64")+np.timedelta64(offset,"s")))
+                    (lambda x: mdates.date2num(pd.to_datetime(taro.utils.dt64_sub_tz_offset(mdates.num2date(x),config["tzinfo"]))),
+                     lambda x: mdates.date2num(pd.to_datetime(taro.utils.dt64_add_tz_offset(mdates.num2date(x),config["tzinfo"])))
                      )
                     )
                 sax.set_xlabel("time (UTC)")
-                sax.set_xticks(mdates.date2num(pd.to_datetime(np.array(mdates.num2date(axs[0].get_xticks())).astype("datetime64")-np.timedelta64(offset,"s"))))
+                sax.set_xticks(mdates.date2num(pd.to_datetime(taro.utils.dt64_sub_tz_offset(mdates.num2date(axs[1,0].get_xticks()),config["tzinfo"]))))
                 sax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(axs[1,0].xaxis.get_major_locator()))
 
             os.makedirs(os.path.dirname(outfile), exist_ok=True)
