@@ -847,9 +847,9 @@ def asi16_keogram(
 
 @cli_asi16.command("keogram2")
 @click.argument("images", nargs=-1)
-@click.argument("keogram_filename", nargs=1)
-@click.option("--cffile", type=str, default=None, show_default=True,
-              help="Filename of cloudiness file.")
+@click.argument("keogram_outpath", nargs=1)
+@click.option("--cffile_path", type=str, default=None, show_default=True,
+              help="Path to cloudiness files.")
 @click.option("--lon",type=float, default=None, show_default=True,
               help="Longitude coordinate (degrees East) of the image. If None, try to parse longitude from config.")
 @click.option("--lat",type=float, default=None, show_default=True,
@@ -866,8 +866,8 @@ def asi16_keogram(
               help="Config file - will merge and override the default config.")
 def asi16_keogram2(
         images: list,
-        keogram_filename: str,
-        cffile: str,
+        keogram_outpath: str,
+        cffile_path: str,
         lon: float,
         lat: float,
         radius_scale: float,
@@ -930,9 +930,9 @@ def asi16_keogram2(
             whole_day=whole_day
         )
 
-        if cffile is not None:
+        if cffile_path is not None:
             cfdays = np.unique(sdate.astype("datetime64[D]"),edate.astype("datetime64[D]"))
-            cfpath = os.path.join(cffile,"{day:%Y/%m/%Y%m%d}_00000_taro-asi16_{campaign}_cloudcoverage.nc")
+            cfpath = os.path.join(cffile_path,"{day:%Y/%m/%Y%m%d}_00000_taro-asi16_{campaign}_cloudcoverage.nc")
 
             dscf = xr.DataArray()
             for i,cfday in enumerate(cfdays):
@@ -944,10 +944,10 @@ def asi16_keogram2(
             if len(dscf)!=0:
                 cf = dscf.cloudiness.mean(dim="exposure_key", skipna=True).squeeze()
             else:
-                cffile = None
+                cffile_path = None
 
         mpl.use('Agg')
-        if cffile is not None:
+        if cffile_path is not None:
             fig = plt.figure(figsize=(10, 7))
             gs = fig.add_gridspec(nrows=7, ncols=1, wspace=0, hspace=0.05)
             ax_keo = fig.add_subplot(gs[1:, 0])
@@ -975,6 +975,8 @@ def asi16_keogram2(
             sax.set_xticks(mdates.date2num(pd.to_datetime(taro.utils.dt64_sub_tz_offset(mdates.num2date(ax_keo.get_xticks()),config["tzinfo"]))))
             sax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(ax_keo.xaxis.get_major_locator()))
 
+        keogram_filename = os.path.join(keogram_outpath,f"{day:%Y/%m/%Y-%m-%d}_taro-asi16_{config['campaign']}_keogram.jpg")
+        os.makedirs(os.path.dirname(keogram_filename), exist_ok=True)
         fig.savefig(keogram_filename, dpi=300, bbox_inches='tight')
 
 @cli_asi16.command("test-config")
