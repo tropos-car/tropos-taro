@@ -937,7 +937,7 @@ def asi16_keogram2(
         )
 
         if cffile_path is not None:
-            cfdays = np.unique(sdate.astype("datetime64[D]"),edate.astype("datetime64[D]"))
+            cfdays = np.unique([np.datetime64(sdate,"D"),np.datetime64(edate,"D")])
             cfpath = os.path.join(cffile_path,"{day:%Y/%m/%Y%m%d}_00000_taro-asi16_{campaign}_cloudcoverage.nc")
 
             dscf = xr.DataArray()
