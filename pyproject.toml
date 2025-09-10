@@ -52,7 +52,8 @@ taro = ["share/*.json", "share/*.CR1X", "share/*.CR1", "conf/*.json", "conf/*.te
 [tool.setuptools]
 script-files = [
     "bin/taro-wiser_move.bat",
-    "bin/taro-asi16_move.bat"
+    "bin/taro-asi16_move.bat",
+    "bin/taro-wiser_WSDAC-watch.ps1"
 ]
 
 [tool.setuptools_scm]
