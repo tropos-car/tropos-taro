@@ -1020,7 +1020,7 @@ def wiser_quicklook(input_files,
                 axs[1, 0].set_xlabel(f"time ({config['tzinfo']} {taro.utils.offset_hhmm(offset)})")
                 # UTC only on top    
                 sax = axs[1,0].secondary_xaxis(
-                    "bottom", 
+                    "top", 
                     (lambda x: mdates.date2num(pd.to_datetime(taro.utils.dt64_sub_tz_offset(mdates.num2date(x),config["tzinfo"]))),
                      lambda x: mdates.date2num(pd.to_datetime(taro.utils.dt64_add_tz_offset(mdates.num2date(x),config["tzinfo"])))
                      )
