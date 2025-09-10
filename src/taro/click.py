@@ -898,10 +898,16 @@ def asi16_keogram2(
         latitude = lat
 
     img_dates = []
+    img = []
     for fn in images:
-        finfo = parse.parse(config['asi16_out'], os.path.basename(fn)).named
+        try:
+            finfo = parse.parse(config['asi16_out'], os.path.basename(fn)).named
+        except:
+            continue
+        img.append(fn)
         img_dates.append(finfo["dt"])
     img_dates = np.array(img_dates)
+    img = np.array(img)
 
     udays = np.unique(img_dates.astype("datetime64[D]"))
     for day in udays:
@@ -913,7 +919,7 @@ def asi16_keogram2(
         day_mask = img_dates.astype("datetime64[D]") >= sdate
         day_mask *= img_dates.astype("datetime64[D]") < edate
         img_day_dates = img_dates[day_mask]
-        images_day = images[day_mask]
+        images_day = img[day_mask]
 
         if whole_day:
             whole_day = (sdate,edate)
