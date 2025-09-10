@@ -933,13 +933,18 @@ def asi16_keogram2(
         if cffile is not None:
             cfdays = np.unique(sdate.astype("datetime64[D]"),edate.astype("datetime64[D]"))
             cfpath = os.path.join(cffile,"{day:%Y/%m/%Y%m%d}_00000_taro-asi16_{campaign}_cloudcoverage.nc")
+
+            dscf = xr.DataArray()
             for i,cfday in enumerate(cfdays):
-                dsc = xr.load_dataset(cfpath.format(day=cfday,campaign=config["campaign"]))
-                if i==0:
-                    dscf = dsc.copy()
+                if os.path.exists(cfpath.format(day=cfday,campaign=config["campaign"])):
+                    dsc = xr.load_dataset(cfpath.format(day=cfday,campaign=config["campaign"]))
                 else:
-                    dscf = xr.concat((dscf,dsc),dim="time")
-            cf = dscf.cloudiness.mean(dim="exposure_key", skipna=True).squeeze()
+                    continue
+                dscf = xr.concat((dscf,dsc),dim="time")
+            if len(dscf)!=0:
+                cf = dscf.cloudiness.mean(dim="exposure_key", skipna=True).squeeze()
+            else:
+                cffile = None
 
         mpl.use('Agg')
         if cffile is not None:
