@@ -111,7 +111,10 @@
   "2025-02-01":{ // 2024 Lindenberg calibration last missing calibration redone
     "A202200023": [7.127,0.1]
   },
-  "2025-02-12":{ // New serial MS80SH
+  "2025-02-12":{ // New serial MS80SH for OSCM
     "A202500094": [11.05,0.1]
+  },
+  "2025-04-18":{ // New serial MS80SH for Melpitz
+    "A202500127": [9.8,0.54]
   }
 }
