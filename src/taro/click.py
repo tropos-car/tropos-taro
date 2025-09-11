@@ -939,24 +939,30 @@ def asi16_keogram2(
 
             if cffile_path is not None:
                 cfdays = np.unique([np.datetime64(sdate,"D"),np.datetime64(edate,"D")])
-                cfpath = os.path.join(cffile_path,"{day:%Y/%m/%Y%m%d}_00000_taro-asi16_{campaign}_cloudcoverage.nc")
-
-                dscf = xr.DataArray()
+                cfpath = os.path.join(cffile_path,"{day:%Y/%m/%Y%m%d}_000000_taro-asi16_{campaign}_cloudcoverage.nc")
+                print(cfpath.format(day=pd.to_datetime(cfdays[0]),campaign=config["campaign"]))
+                print(cfdays)
                 dscfempty = True
                 for i,cfday in enumerate(cfdays):
+                    print(cfpath.format(day=pd.to_datetime(cfday),campaign=config["campaign"]))
+                    print(os.path.exists(cfpath.format(day=pd.to_datetime(cfday),campaign=config["campaign"])))
                     if os.path.exists(cfpath.format(day=pd.to_datetime(cfday),campaign=config["campaign"])):
-                        dsc = xr.load_dataset(cfpath.format(day=cfday,campaign=config["campaign"]))
+                        dsc = xr.load_dataset(cfpath.format(day=pd.to_datetime(cfday),campaign=config["campaign"]))
+                        print(dsc)
                     else:
                         continue
-                    dscf = xr.concat((dscf,dsc),dim="time")
-                    dscfempty=False
+                    if dscfempty:
+                        dscf = dsc.copy()
+                        dscfempty = False
+                    else:
+                        dscf = xr.concat((dscf,dsc),dim="time")
+                    
                 if not dscfempty:
                     cf = dscf.cloudiness.mean(dim="exposure_key", skipna=True).squeeze()
-                else:
-                    cffile_path = None
+                
 
             mpl.use('Agg')
-            if cffile_path is not None:
+            if (cffile_path is not None) and (not dscfempty):
                 fig = plt.figure(figsize=(10, 7))
                 gs = fig.add_gridspec(nrows=7, ncols=1, wspace=0, hspace=0.05)
                 ax_keo = fig.add_subplot(gs[1:, 0])
@@ -975,7 +981,7 @@ def asi16_keogram2(
             if config["tzinfo"]:
                 # local time only on top    
                 sax = ax_keo.secondary_xaxis(
-                    "top", 
+                    "bottom", 
                     (lambda x: mdates.date2num(pd.to_datetime(taro.utils.dt64_sub_tz_offset(mdates.num2date(x),config["tzinfo"]))),
                     lambda x: mdates.date2num(pd.to_datetime(taro.utils.dt64_add_tz_offset(mdates.num2date(x),config["tzinfo"])))
                     )
@@ -983,6 +989,7 @@ def asi16_keogram2(
                 sax.set_xlabel(f"time ({config['tzinfo']} {taro.utils.offset_hhmm(offset)})")
                 sax.set_xticks(mdates.date2num(pd.to_datetime(taro.utils.dt64_sub_tz_offset(mdates.num2date(ax_keo.get_xticks()),config["tzinfo"]))))
                 sax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(ax_keo.xaxis.get_major_locator()))
+                sax.tick_params("x",pad=30)
 
             keogram_filename = os.path.join(keogram_outpath,f"{pd.to_datetime(day):%Y/%m/%Y-%m-%d}_taro-asi16_{config['campaign']}_keogram.jpg")
             os.makedirs(os.path.dirname(keogram_filename), exist_ok=True)
