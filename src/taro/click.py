@@ -940,15 +940,10 @@ def asi16_keogram2(
             if cffile_path is not None:
                 cfdays = np.unique([np.datetime64(sdate,"D"),np.datetime64(edate,"D")])
                 cfpath = os.path.join(cffile_path,"{day:%Y/%m/%Y%m%d}_000000_taro-asi16_{campaign}_cloudcoverage.nc")
-                print(cfpath.format(day=pd.to_datetime(cfdays[0]),campaign=config["campaign"]))
-                print(cfdays)
                 dscfempty = True
                 for i,cfday in enumerate(cfdays):
-                    print(cfpath.format(day=pd.to_datetime(cfday),campaign=config["campaign"]))
-                    print(os.path.exists(cfpath.format(day=pd.to_datetime(cfday),campaign=config["campaign"])))
                     if os.path.exists(cfpath.format(day=pd.to_datetime(cfday),campaign=config["campaign"])):
                         dsc = xr.load_dataset(cfpath.format(day=pd.to_datetime(cfday),campaign=config["campaign"]))
-                        print(dsc)
                     else:
                         continue
                     if dscfempty:

@@ -107,24 +107,30 @@ def make_keogram(
             keogram_image = concat_images(keogram_image, filling_slice)
             continue
 
-        with Image.open(img_files[img_dates.index(dt)]) as cimage:
-            radius = int(radius_scale * cimage.size[0] // 2)
+        try: 
+            cimage = Image.open(img_files[img_dates.index(dt)])
+        except:
+            keogram_image = concat_images(keogram_image, filling_slice)
+            continue
+        else:
+            with Image.open(img_files[img_dates.index(dt)]) as cimage:
+                radius = int(radius_scale * cimage.size[0] // 2)
 
-            if flip:
-                # flip image if required
-                cimage = cimage.transpose(Image.FLIP_LEFT_RIGHT)
+                if flip:
+                    # flip image if required
+                    cimage = cimage.transpose(Image.FLIP_LEFT_RIGHT)
 
-            # rotate into the sun
-            cimage = cimage.rotate(angle_offset + hangle[i])
+                # rotate into the sun
+                cimage = cimage.rotate(angle_offset + hangle[i])
 
-            # crop to slice
-            img_width, img_height = cimage.size
-            img_centerx, img_centery = img_width // 2, img_height // 2
-            slice = (img_centerx, img_centery - radius, img_centerx + 2 * int(1 / out_scale), img_centery + radius)
-            cimage = cimage.crop(slice)
+                # crop to slice
+                img_width, img_height = cimage.size
+                img_centerx, img_centery = img_width // 2, img_height // 2
+                slice = (img_centerx, img_centery - radius, img_centerx + 2 * int(1 / out_scale), img_centery + radius)
+                cimage = cimage.crop(slice)
 
-            # attach to keogram
-            keogram_image = concat_images(keogram_image, cimage)
+                # attach to keogram
+                keogram_image = concat_images(keogram_image, cimage)
     return keogram_image, date_filled[0], date_filled[-1]
 
 
