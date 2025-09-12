@@ -862,6 +862,7 @@ def asi16_keogram(
 @click.option("--fill-color",nargs=3,default=[0,0,0],show_default=True,
               help="Color of missing images in keogram (R,G,B).")
 @click.option("--whole-day/--no-whole-day",default=False)
+@click.option("--skip-exists", is_flag=True, help="Skip if output exists.")
 @click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
               help="Config file - will merge and override the default config.")
 def asi16_keogram2(
@@ -875,6 +876,7 @@ def asi16_keogram2(
         flip: bool,
         fill_color: list,
         whole_day:bool,
+        skip_exists:bool,
         config: str
 ):
     config = _configure(config)
@@ -912,6 +914,10 @@ def asi16_keogram2(
     udays = np.unique(img_dates.astype("datetime64[D]"))
     with click.progressbar(udays, label='Make daily keogram:') as udays:
         for day in udays:
+            keogram_filename = os.path.join(keogram_outpath,f"{pd.to_datetime(day):%Y/%m/%Y-%m-%d}_taro-asi16_{config['campaign']}_keogram.jpg")
+            if skip_exists and os.path.exists(keogram_filename):
+                continue
+
             offset = 0
             if config["tzinfo"]:
                 offset = taro.utils.tz_offset(config["tzinfo"])
@@ -986,7 +992,6 @@ def asi16_keogram2(
                 sax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(ax_keo.xaxis.get_major_locator()))
                 sax.tick_params("x",pad=30)
 
-            keogram_filename = os.path.join(keogram_outpath,f"{pd.to_datetime(day):%Y/%m/%Y-%m-%d}_taro-asi16_{config['campaign']}_keogram.jpg")
             os.makedirs(os.path.dirname(keogram_filename), exist_ok=True)
             fig.savefig(keogram_filename, dpi=300, bbox_inches='tight')
 
