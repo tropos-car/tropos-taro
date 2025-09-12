@@ -1164,16 +1164,14 @@ def wiser_quicklook(input_files,
                     ds = taro.futils.merge_ds(add_ds,ds)
                     # add time offset
                     ds = ds.assign_coords({"time":("time",ds.time.values+np.timedelta64(offset,"s"))})
-                    # select day for local time
-                    period = np.array(pd.date_range(
+                    tz_applied = True
+
+            period = np.array(pd.date_range(
                         f"{fname_info['dt']:%Y-%m-%dT00:00}",
                         f"{fname_info['dt']:%Y-%m-%dT23:59}",
                         freq="1min"
                     )).astype("datetime64[ns]")
-                    ds = ds.reindex(time=period)
-                    tz_applied = True
-
-
+            ds = ds.reindex(time=period)
             fig,axs = taro.plot.wiser_quicklook(ds,whole_day=(period[0],period[1]))
 
             # add local time label if timezone is applied and add UTC information
