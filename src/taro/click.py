@@ -959,7 +959,11 @@ def asi16_keogram2(
                         dscf = xr.concat((dscf,dsc),dim="time")
                     
                 if not dscfempty:
-                    cf = dscf.cloudiness.mean(dim="exposure_key", skipna=True).squeeze()
+                    periode = np.array(pd.date_range(
+                        sdate,edate,freq="1min"
+                    )).astype("datetime64[ns]")
+                    dscf = dscf.reindex(time=periode)
+                    cf = dscf.cloudiness.interpolate_na("time",max_gap=pd.Timedelta("5min")).mean(dim="exposure_key", skipna=True).squeeze()#
                 
 
             mpl.use('Agg')
@@ -968,7 +972,7 @@ def asi16_keogram2(
                 gs = fig.add_gridspec(nrows=7, ncols=1, wspace=0, hspace=0.05)
                 ax_keo = fig.add_subplot(gs[1:, 0])
                 ax_cf = fig.add_subplot(gs[0, 0], sharex=ax_keo)
-                ax_cf = taro.plot.cloudfraction(cf, Nsmooth=10, ax=ax_cf)
+                ax_cf = taro.plot.cloudfraction(cf, Nsmooth=1, ax=ax_cf)
             else:
                 fig, ax_keo = plt.subplots(1,1, figsize=(10, 6))
 

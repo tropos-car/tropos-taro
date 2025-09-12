@@ -560,8 +560,8 @@ def cloudfraction(cf, Nsmooth=10, ax=None):
 
     cf.values = cf.values * 8
     cf.values = np.convolve(cf.values, np.ones(Nsmooth), mode='same') / Nsmooth
-    ax.fill_between(cf.time, cf, color='k')
-    ax.fill_between(cf.time, [8]+list(8*np.isnan(cf)[1:-1])+[8],color='w',edgecolor='grey', hatch="x", lw=0)
+    ax.fill_between(cf.time, cf, color='k',where=~np.isnan(cf))
+    ax.fill_between(cf.time, 8,where=np.isnan(cf),color='w',edgecolor='grey', hatch="x", lw=0)
 
     ax.set_ylim([0, 8])
     ax.set_yticks(np.arange(2, 8, 2))
