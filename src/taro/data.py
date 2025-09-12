@@ -376,7 +376,7 @@ def wiser_to_l1a(date, pf, *, config=None, global_attrs=None):
             ))
         except Exception as error:
             # handle the exception
-            print("An exception occurred:", error)
+            #print("An exception occurred:", error)
             logger.error("An exception occurred: " + str(error))
             continue
 
@@ -385,7 +385,7 @@ def wiser_to_l1a(date, pf, *, config=None, global_attrs=None):
             time = (f"{datetime:%Y-%m-%d}T" + df.head(1).astype(str)).values[0, 1::3].astype("datetime64[ns]")
         except Exception as error:
             # handle the exception
-            print("An exception occurred:", error)
+            #print("An exception occurred:", error)
             logger.error("An exception occurred: " + str(error))
             continue
         wvls = df.values[7:, 0].astype(float)  # [nm]

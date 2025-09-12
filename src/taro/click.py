@@ -260,7 +260,7 @@ def ql_data(input_files, output_path, skip_exists, config,dpi):
                 offset = taro.utils.tz_offset(config["tzinfo"])
                 add_date = (np.datetime64(fname_info["dt"]) - np.timedelta64(offset,"s")).astype("datetime64[D]")
                 add_date = pd.to_datetime(add_date)
-                add_file = fn.replace(f"{fname_info['dt']:%Y-%m-%d}",f"{add_date:%Y-%m-%d}")
+                add_file = fn.replace(f"{fname_info['dt']:%Y/%m/%Y-%m-%d}",f"{add_date:%Y/%m/%Y-%m-%d}")
                 print(add_file)
                 if os.path.exists(add_file):
                     print(add_file)
@@ -347,7 +347,7 @@ def ql_quality(input_files: list, output_path: str, skip_exists:bool, config: di
                 offset = taro.utils.tz_offset(config["tzinfo"])
                 add_date = (np.datetime64(fname_info["dt"]) - np.timedelta64(offset,"s")).astype("datetime64[D]")
                 add_date = pd.to_datetime(add_date)
-                add_file = fn.replace(f"{fname_info['dt']:%Y-%m-%d}",f"{add_date:%Y-%m-%d}")
+                add_file = fn.replace(f"{fname_info['dt']:%Y/%m/%Y-%m-%d}",f"{add_date:%Y/%m/%Y-%m-%d}")
                 print(add_file)
                 if os.path.exists(add_file):
                     print(add_file)
@@ -917,8 +917,8 @@ def asi16_keogram2(
                 offset = taro.utils.tz_offset(config["tzinfo"])
             sdate = day.astype("datetime64[ns]") - np.timedelta64(offset,"s")
             edate = sdate + np.timedelta64(1,"D")
-            day_mask = img_dates.astype("datetime64[D]") >= sdate
-            day_mask *= img_dates.astype("datetime64[D]") < edate
+            day_mask = img_dates.astype("datetime64[ns]") >= sdate
+            day_mask *= img_dates.astype("datetime64[ns]") < edate
             img_day_dates = img_dates[day_mask]
             images_day = img[day_mask]
 
@@ -1153,14 +1153,19 @@ def wiser_quicklook(input_files,
                 offset = taro.utils.tz_offset(config["tzinfo"])
                 add_date = (np.datetime64(fname_info["dt"]) - np.timedelta64(offset,"s")).astype("datetime64[D]")
                 add_date = pd.to_datetime(add_date)
-                add_file = fn.replace(f"{fname_info['dt']:%Y-%m-%d}",f"{add_date:%Y-%m-%d}")
+                add_file = fn.replace(f"{fname_info['dt']:%Y/%m/%Y-%m-%d}",f"{add_date:%Y/%m/%Y-%m-%d}")
                 if os.path.exists(add_file):
                     add_ds = xr.load_dataset(add_file)
                     ds = taro.futils.merge_ds(add_ds,ds)
                     # add time offset
                     ds = ds.assign_coords({"time":("time",ds.time.values+np.timedelta64(offset,"s"))})
                     # select day for local time
-                    ds = ds.sel(time=f"{fname_info['dt']:%Y-%m-%d}")
+                    period = np.array(pd.date_range(
+                        f"{fname_info['dt']:%Y-%m-%dT00:00}",
+                        f"{fname_info['dt']:%Y-%m-%dT23:59}",
+                        freq="1min"
+                    )).astype("datetime64[ns]")
+                    ds = ds.reindex(time=period)
                     tz_applied = True
 
 
@@ -1171,7 +1176,7 @@ def wiser_quicklook(input_files,
                 axs[1, 0].set_xlabel(f"time ({config['tzinfo']} {taro.utils.offset_hhmm(offset)})")
                 # UTC only on top    
                 sax = axs[1,0].secondary_xaxis(
-                    "top", 
+                    "bottom", 
                     (lambda x: mdates.date2num(pd.to_datetime(taro.utils.dt64_sub_tz_offset(mdates.num2date(x),config["tzinfo"]))),
                      lambda x: mdates.date2num(pd.to_datetime(taro.utils.dt64_add_tz_offset(mdates.num2date(x),config["tzinfo"])))
                      )
@@ -1179,6 +1184,7 @@ def wiser_quicklook(input_files,
                 sax.set_xlabel("time (UTC)")
                 sax.set_xticks(mdates.date2num(pd.to_datetime(taro.utils.dt64_sub_tz_offset(mdates.num2date(axs[1,0].get_xticks()),config["tzinfo"]))))
                 sax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(axs[1,0].xaxis.get_major_locator()))
+                sax.tick_params("x",pad=30)
 
             os.makedirs(os.path.dirname(outfile), exist_ok=True)
             fig.savefig(outfile, dpi=dpi, bbox_inches='tight')

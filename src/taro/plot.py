@@ -561,6 +561,8 @@ def cloudfraction(cf, Nsmooth=10, ax=None):
     cf.values = cf.values * 8
     cf.values = np.convolve(cf.values, np.ones(Nsmooth), mode='same') / Nsmooth
     ax.fill_between(cf.time, cf, color='k')
+    ax.fill_between(cf.time, [8]+list(8*np.isnan(cf)[1:-1])+[8],color='w',edgecolor='grey', hatch="x", lw=0)
+
     ax.set_ylim([0, 8])
     ax.set_yticks(np.arange(2, 8, 2))
     ax.grid(True)
@@ -578,7 +580,15 @@ def cloudfraction(cf, Nsmooth=10, ax=None):
     )
     return ax
 
-def wiser_quicklook(ds):
+def wiser_quicklook(ds, whole_day=False):
+
+    # complete dates
+    if whole_day:
+        sdate, edate = whole_day
+    else:
+        sdate = ds.time.values[0]
+        edate = ds.time.values[-1]
+
     fig, axs = plt.subplots(
         2, 2, figsize=(9, 6),
         width_ratios=[0.8, 0.2], height_ratios=[0.2, 0.8],
@@ -586,9 +596,8 @@ def wiser_quicklook(ds):
     )
 
     val = ds.dflx_sp_wiser.values
-    val[np.isnan(val)] = 0
-    val[val < 1e-3] = 0
-    val[val > 1e2] = 0
+    val[val < 1e-3] = np.nan
+    val[val > 1e2] = np.nan
 
     nval = ds.dflx_sp_wiser.mean(dim='time', skipna=True)
     nval = nval / np.max(nval)
@@ -600,11 +609,18 @@ def wiser_quicklook(ds):
         cmap="cividis",
         norm=mcolors.LogNorm(vmin=1e-3, vmax=10)
     )
+    # fill missing data with hatch
+    ymin,ymax = axs[1,0].get_ylim()
+    val_is_nan = ymin*np.ones(ds.time.size)
+    val_is_nan[np.all(np.isnan(val),axis=1)] = ymax
+    axs[1,0].fill_between(ds.time,val_is_nan,ymin, color='w', hatch='x', lw=0, edgecolor='grey')
+
+    # configure axis
+    val[np.isnan(val)] = 0 # set 0 for interpolation
     axs[0, 0].plot(ds.time, trapezoid(val.T, ds.wvl, axis=0), color='k')
     axs[0, 0].set_ylim((-10, 1300))
     axs[1, 1].set_xlim((axs[1, 1].get_xlim()[0], 1.05))
-    axs[1, 0].set_xlim((ds.time.values[0].astype("datetime64[D]"),
-                        ds.time.values[0].astype("datetime64[D]") + np.timedelta64(23 * 60 + 59, 'm')))
+    axs[1, 0].set_xlim((sdate,edate))
     axs[1, 0].set_xlabel("time (UTC)")
     axs[1, 0].set_ylabel("wavelength (um)")
 
@@ -623,7 +639,7 @@ def wiser_quicklook(ds):
     # Ax00 title
     axs[0, 0].text(0.02, 0.92, "broadband solar irradiance\n (W m-2)", transform=axs[0, 0].transAxes, va='top',
                    ha='left')
-    # Ax00 title
+    # Ax11 title
     axs[1, 1].text(0.92, 0.97, "normed mean spectral flux", transform=axs[1, 1].transAxes, va='top', ha='left',
                    rotation=-90, rotation_mode='anchor')
 
