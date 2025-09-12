@@ -1172,7 +1172,7 @@ def wiser_quicklook(input_files,
                         freq="1min"
                     )).astype("datetime64[ns]")
             ds = ds.reindex(time=period)
-            fig,axs = taro.plot.wiser_quicklook(ds,whole_day=(period[0],period[1]))
+            fig,axs = taro.plot.wiser_quicklook(ds,whole_day=(period[0],period[-1]))
 
             # add local time label if timezone is applied and add UTC information
             if tz_applied:
