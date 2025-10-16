@@ -389,6 +389,10 @@ def wiser_to_l1a(date, pf, *, config=None, global_attrs=None):
             logger.error("An exception occurred: " + str(error))
             continue
         wvls = df.values[7:, 0].astype(float)  # [nm]
+        if wvls.size == 0:
+            logger.error(f"Skip empty file: {fname.format(dt=datetime + dt.timedelta(hours=int(hour)),campaign=config['campaign'], sfx='CSV' )}")
+            continue
+
         values_711 = (df.values[7:, 1::3].astype(float).T) * 1e-3  # [W m-2 nm-1]
         values_713 = (df.values[7:, 2::3].astype(float).T) * 1e-3  # [W m-2 nm-1]
         values_merge = (df.values[7:, 3::3].astype(float).T) * 1e-3  # [W m-2 nm-1]
@@ -422,10 +426,11 @@ def wiser_to_l1a(date, pf, *, config=None, global_attrs=None):
         else:
             ds = xr.concat((ds, dst), dim='time')
     
-    if ds.time.size <3:
-        return None
 
     if new:
+        return None
+    
+    if ds.time.size <3:
         return None
 
     # add meta
