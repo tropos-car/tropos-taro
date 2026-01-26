@@ -12,6 +12,7 @@
         "authors_software": "Jonas Witthuhn",
         "creator_name"    : "{creator_name}",
         "project"         : "{project}",
+        "site"            : "{campaign}",
         "references"      : "https://www.tropos.de/forschung/grossprojekte-infrastruktur-technologie/technologie-am-tropos/fernerkundung/strahlungsmessstation-bsrn",
         "standard_name_vocabulary" : "CF Standard Name Table v81",
         "conventions"     : "CF-1.10, ACDD-1.3",
