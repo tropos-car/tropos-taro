@@ -29,6 +29,19 @@
   "asi16_id": "", // Tropos ID of ASI-16 camera
   // wiser config
   "wiser_ids": ["", ""], // Tropos-IDs of [EKO-711, EKO-713]
+  // bsrn config
+  "bsrn_variables": ["dni","ghi","dhi","lwd","temp_air","pressure","relative_humidity"], // Tropos IDs of instruments used for BSRN data (radiation + meteorology)
+  "bsrn_stsci_name": "", // BSRN station scientist name
+  "bsrn_stdep_name": "", // BSRN station deputy name
+  "bsrn_stsci_phone": "", // BSRN station scientist phone
+  "bsrn_stdep_phone": "",
+  "bsrn_stsci_fax": "",
+  "bsrn_stdep_fax": "",
+  "bsrn_stsci_mail": "",
+  "bsrn_stdep_mail": "",
+  "bsrn_stsci_address": "",
+  "bsrn_stdep_address": "",
+  "bsrn_st_address": "",
   // to_l1a config
   "logger_name": "CR1000X", // Loggernet - Loggername
   // to_l1b config

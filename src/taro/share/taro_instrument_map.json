@@ -188,22 +188,26 @@
   "A202200021": {
     "serial": "S21023066",
     "device": "Pyranometer MS-80, Eko Instruments",
-    "station": "TARO-OSCM (Cape Verde)"
+    "station": "TARO-OSCM (Cape Verde)",
+    "date_purchase": "2022-04"
   },
   "A202200022": {
     "serial": "S21023067",
     "device": "Pyranometer MS-80, Eko Instruments",
-    "station": "TARO-OSCM (Cape Verde)"
+    "station": "TARO-OSCM (Cape Verde)",
+    "date_purchase": "2022-04"
   },
   "A202200023": {
     "serial": "S20006.19",
     "device": "Pyrheliometer MS-57, Eko Instruments",
-    "station": "TARO-OSCM (Cape Verde)"
+    "station": "TARO-OSCM (Cape Verde)",
+    "date_purchase": "2022-04"
   },
   "A202200024": {
     "serial": "S21090.04",
     "device": "Pyrgeometer MS-21, Eko Instruments",
-    "station": "TARO-OSCM (Cape Verde)"
+    "station": "TARO-OSCM (Cape Verde)",
+    "date_purchase": "2022-04"
   },
   "A202300014": {
     "serial": "EX23021.01",
@@ -218,12 +222,14 @@
   "S24012236":{
     "serial": "S24012236",
     "device": "Pyranometer ML-01, Eko Instruments",
-    "station": "TARO-OSCM (Cape Verde)"
+    "station": "TARO-OSCM (Cape Verde)",
+    "date_purchase": "2024-09"
   },
   "A202500094": {
     "serial": "S25003159",
     "device": "Pyranometer MS-80SH, Eko Instruments",
-    "station": "TARO-OSCM (Cape Verde)"
+    "station": "TARO-OSCM (Cape Verde)",
+    "date_purchase": "2025-02"
   },
   // TARO-Melpitz
   "A202200091": {
@@ -244,31 +250,48 @@
   "A202400058": {
     "serial": "S23009.15",
     "device": "Suntracker STR-22G, Eko Instruments",
-    "station": "TARO-Melpitz"
+    "station": "TARO-Melpitz",
+    "date_purchase": "2024-05"
   },
   "A202400059": {
     "serial": "S23083027",
     "device": "Pyranometer MS-80, Eko Instruments",
-    "station": "TARO-Melpitz"
+    "station": "TARO-Melpitz",
+    "wrmc_id": 87002,
+    "date_purchase": "2024-05"
   },
   "A202400060": {
     "serial": "S23083028",
     "device": "Pyranometer MS-80, Eko Instruments",
-    "station": "TARO-Melpitz"
+    "station": "TARO-Melpitz",
+    "wrmc_id": 87003,
+    "date_purchase": "2024-05"
   },
   "A202400061": {
     "serial": "S22037.37",
     "device": "Pyrheliometer MS-57, Eko Instruments",
-    "station": "TARO-Melpitz"
+    "station": "TARO-Melpitz",
+    "wrmc_id": 87001,
+    "date_purchase": "2024-05"
   },
   "A202400062": {
     "serial": "S22070.08",
     "device": "Pyrgeometer MS-21, Eko Instruments",
-    "station": "TARO-Melpitz"
+    "station": "TARO-Melpitz",
+    "wrmc_id": 87004,
+    "date_purchase": "2024-05"
   },
   "S24012237":{
     "serial": "S24012237",
     "device": "Pyranometer ML-01, Eko Instruments",
-    "station": "TARO-Melpitz"
+    "station": "TARO-Melpitz",
+    "date_purchase": "2024-09"
+  },
+  "A202500127": {
+    "serial": "S25003990",
+    "device": "Pyranometer MS-80SH, Eko Instruments",
+    "station": "TARO-Melpitz",
+    "wrmc_id": 87005,
+    "date_purchase": "2025-04"
   }
 }

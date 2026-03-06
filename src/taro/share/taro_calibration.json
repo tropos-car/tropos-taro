@@ -1,6 +1,17 @@
 {
   // TARO-CORE broadband sensor calibrations
-  // [calibration_factor, calibration_factor_uncertainty]
+  // units: [calibration_factor, calibration_factor_uncertainty]
+  // calibration: [
+  //    calibration_factor,
+  //    calibration_factor_uncertainty,
+  //    calibration_repeats,
+  //    calibration_person,
+  //    calibration_location,
+  //    calibration_period_start,
+  //    calibration_period_end,
+  //    calibration remarks,
+  //]
+  // [-1,-1,1,"XXX","XXX","XXX","XXX","XXX"],
   "units": ["uV W-1 m2", "%"],
   "temp_correction": {
     // Temperature correction coefficients
@@ -8,113 +19,114 @@
     "A202400062": [3.8977e-6, -1.1283e-4, 1.2158e-3]
   },
   "2012-10-01": {
-    "A201200137": [7.407, null],
-    "A201200139": [8.62, null],
-    "A201200140": [8.85, null],
-    "A201200141": [13.75, null]
+    "A201200137": [7.407, null,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201200139": [8.62, null,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201200140": [8.85, null,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201200141": [13.75, null,1,"XXX","XXX","XXX","XXX","XXX"]
   },
   "2013-01-01": {
-    "10004.23": [6.73, null],
-    "11107.038": [7.02, null]
+    "10004.23": [6.73, null,1,"XXX","XXX","XXX","XXX","XXX"],
+    "11107.038": [7.02, null,1,"XXX","XXX","XXX","XXX","XXX"]
   },
   "2016-06-01": {
-    "A201200137": [7.44, null],
-    "A201200139": [8.66, null],
-    "A201200140": [8.91, null],
-    "A201200141": [13.45, null]
+    "A201200137": [7.44, null,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201200139": [8.66, null,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201200140": [8.91, null,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201200141": [13.45, null,1,"XXX","XXX","XXX","XXX","XXX"]
   },
   "2017-01-01": {
-    "A201700042": [10.12, 0.86],
-    "A201700043": [10.12, 0.67],
-    "A201700044": [7.972, 0.63],
-    "A201700046": [11.58, 0.41],
-    "A201700047": [8.92, null],
-    "A201700048": [8.74, null],
-    "A201700049": [9.21, null],
-    "A201700050": [11.54, 0.65]
+    "A201700042": [10.12, 0.86,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201700043": [10.12, 0.67,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201700044": [7.972, 0.63,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201700046": [11.58, 0.41,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201700047": [8.92, null,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201700048": [8.74, null,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201700049": [9.21, null,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201700050": [11.54, 0.65,1,"XXX","XXX","XXX","XXX","XXX"]
   },
   "2018-05-01": {
-    "S17139313": [47.6, 1.7],
-    "S17139315": [44.2, 1.7]
+    "S17139313": [47.6, 1.7,1,"XXX","XXX","XXX","XXX","XXX"],
+    "S17139315": [44.2, 1.7,1,"XXX","XXX","XXX","XXX","XXX"]
   },
   "2018-07-01": { // 2018 Lindenberg calibration
-    "A201200137": [7.47, 0.23],
-    "A201200139": [8.64, 0.01],
-    "A201200140": [8.89, 0.02],
-    "A201200141": [13.37, 0.18],
-    "A201700049": [9.25, 0.01],
-    "A201700050": [11.42, 0.14],
-    "A201800108": [13.1, 0.6],
-    "A201900002": [9.21, 0.63],
-    "A201900003": [9.22, 0.63],
-    "A201900004": [9.23, 0.63],
-    "A201900005": [6.542, 0.63]
+    "A201200137": [7.47, 0.23,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201200139": [8.64, 0.01,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201200140": [8.89, 0.02,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201200141": [13.37, 0.18,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201700049": [9.25, 0.01,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201700050": [11.42, 0.14,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201800108": [13.1, 0.6,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201900002": [9.21, 0.63,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201900003": [9.22, 0.63,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201900004": [9.23, 0.63,1,"XXX","XXX","XXX","XXX","XXX"],
+    "A201900005": [6.542, 0.63,1,"XXX","XXX","XXX","XXX","XXX"]
   },
   "2019-01-01": {
-    "A201800109": [15.77, 0.52]
+    "A201800109": [15.77, 0.52,1,"XXX","XXX","XXX","XXX","XXX"]
   },
   "2021-04-01": {
-    "A202200023": [7.101, 0.58]
+    "A202200023": [7.101, 0.58,1,"XXX","EKO INSTRUMENTS Tokyo","2021-02-03","2021-02-03","ISO/IEC9059"]
   },
   "2021-10-01": {
-    "A202200021": [10.75, 0.56],
-    "A202200022": [10.46, 0.56]
+    "A202200021": [10.75, 0.56,1,"XXX","EKO INSTRUMENTS Tokyo","2021-10-19","2021-10-19","ISO/IEC9847 direct beam type IIc"],
+    "A202200022": [10.46, 0.56,1,"XXX","EKO INSTRUMENTS Tokyo","2021-10-19","2021-10-19","ISO/IEC9847 direct beam type IIc"]
   },
   "2022-03-01": {
-    "A202200024": [18.89, 1.25]
+    "A202200024": [18.89, 1.25,1,"XXX","EKO INSTRUMENTS Tokyo","2022-03-07","2022-03-07","Comparison to reference in cloudless conditions"]
   },
   "2022-10-01": { // 2022 Lindenberg calibration
-    "A201200139": [8.64, 0.01],
-    "A201200140": [8.92, 0.01],
-    "A201200141": [13.44, 0.39],
-    "A201700042": [10.145, 0.43],
-    "A201700043": [10.138, 0.69],
-    "A201700044": [8.056, 0.63],
-    "A201700046": [11.58, 0.26],
-    "A201700049": [9.24, 0.01],
-    "A201700050": [11.51, 0.18],
-    "A201900005": [6.482, 0.019]
+    "A201200137": [7.49, 0.1,1,"J. Karpinsky","DWD Lindenberg","2022-07-25","2022-09-22","ISO9059 using sun as a source"],
+    "A201200139": [8.64, 0.01,1,"J. Karpinsky","DWD Lindenberg","2022-07-22","2022-09-22","ISO9847 indoor"],
+    "A201200140": [8.92, 0.01,1,"J. Karpinsky","DWD Lindenberg","2022-07-22","2022-09-22","ISO9847 indoor"],
+    "A201200141": [13.44, 0.39,1,"J. Karpinsky","DWD Lindenberg","2022-07-22","2022-09-22","ISO9847 indoor"],
+    "A201700042": [10.145, 0.43,1,"J. Karpinsky","DWD Lindenberg","2022-07-22","2022-09-22","ISO9847 indoor"],
+    "A201700043": [10.138, 0.69,1,"J. Karpinsky","DWD Lindenberg","2022-07-22","2022-09-22","ISO9847 indoor"],
+    "A201700044": [8.056, 0.63,1,"J. Karpinsky","DWD Lindenberg","2022-07-12","2022-09-22","ISO9059 using sun as a source"],
+    "A201700046": [11.58, 0.26,1,"J. Karpinsky","DWD Lindenberg","2022-07-28","2022-09-12","Comparison to reference in cloudless conditions"],
+    "A201700049": [9.24, 0.01,1,"J. Karpinsky","DWD Lindenberg","2022-07-22","2022-09-22","ISO9847 indoor"],
+    "A201700050": [11.51, 0.18,1,"J. Karpinsky","DWD Lindenberg","2022-07-22","2022-09-22","ISO9847 indoor"],
+    "A201900005": [6.482, 0.019,1,"J. Karpinsky","DWD Lindenberg","2022-07-25","2022-09-22","ISO9059 using sun as a source"]
   },
   "2023-10-26": {
-    "A202400061": [6.728, 0.59]
+    "A202400061": [6.728, 0.59,1,"XXX","EKO INSTRUMENTS Tokyo","2023-10-26","2023-10-26","ISO/IEC9059"]
   },
   "2024-05-01": {
-    "A202400059": [10.66, 0.52],
-    "A202400060": [10.83, 0.52],
-    "A202400062": [18.6, 1.28]
+    "A202400059": [10.66, 0.52,1,"XXX","EKO INSTRUMENTS Tokyo","2024-05-22","2024-05-22","ISO/IEC9847:2023 indoor type A1"],
+    "A202400060": [10.83, 0.52,1,"XXX","EKO INSTRUMENTS Tokyo","2024-05-22","2024-05-22","ISO/IEC9847:2023 indoor type A1"],
+    "A202400062": [18.6, 1.28,1,"XXX","EKO INSTRUMENTS Tokyo","2024-05-22","2024-05-22","XXX"]
   },
   "2024-09-01":{
-    "S24012236": [52.8, 1.69],
-    "S24012237": [52.3, 1.69]
+    "S24012236": [52.8, 1.69,1,"XXX","EKO INSTRUMENTS Tokyo","2024-09-09","2024-09-09","ISO/IEC9847:2023 indoor type A1"],
+    "S24012237": [52.3, 1.69,1,"XXX","EKO INSTRUMENTS Tokyo","2024-09-09","2024-09-09","ISO/IEC9847:2023 indoor type A1"]
   },
   "2024-11-01":{ // 2024 Lindenberg calibration first batch
-    "A201700042": [10.18, 0.69],
-    "A201700043": [10.24, 0.69],
-    "A201700044": [8.04, 0.01],
-    "A201700046": [11.51, 4.0],
-    "A201700049": [9.24, 1.3],
-    "A201200139": [8.64, 1.4],
-    "A201200140": [9.88, 1.4],
-    "A201200141": [13.42, 4.0],
-    "A202200024": [18.83, 4.0]
+    "A201700042": [10.18, 0.69,1,"J. Karpinsky","DWD Lindenberg","2024-07-08","2024-11-13","ISO9847 indoor"],
+    "A201700043": [10.24, 0.69,1,"J. Karpinsky","DWD Lindenberg","2024-07-08","2024-11-13","ISO9847 indoor"],
+    "A201700044": [8.04, 0.01,1,"J. Karpinsky","DWD Lindenberg","2024-09-20","2024-10-25","ISO9059 using sun as a source"],
+    "A201700046": [11.51, 4.0,1,"J. Karpinsky","DWD Lindenberg","2024-09-05","2024-10-27","Comparison to reference in cloudless conditions"],
+    "A201700049": [9.24, 1.3,1,"J. Karpinsky","DWD Lindenberg","2024-07-08","2024-11-13","ISO9847 indoor"],
+    "A201200139": [8.64, 1.4,1,"J. Karpinsky","DWD Lindenberg","2024-07-08","2024-11-13","ISO9847 indoor"],
+    "A201200140": [9.88, 1.4,1,"J. Karpinsky","DWD Lindenberg","2024-07-08","2024-11-13","ISO9847 indoor"],
+    "A201200141": [13.42, 4.0,1,"J. Karpinsky","DWD Lindenberg","2024-07-08","2024-11-13","ISO9847 indoor"],
+    "A202200024": [18.83, 4.0,1,"J. Karpinsky","DWD Lindenberg","2024-09-05","2024-10-28","Comparison to reference in cloudless conditions"]
   },
   "2024-12-01":{ // 2024 Lindenberg calibration second batch
-    "A201700050": [11.33, 4.0],
-    "A201900002": [9.42, 0.7],
-    "A201900003": [9.57, 0.7],
-    "A201900004": [9.51, 0.7],
-    "A202200021": [10.78, 0.7],
-    "A202200022": [10.49, 0.7],
-    "A201200137": [7.49, 0.1],
-    "A201900005": [6.51, 0.2]
+    "A201700050": [11.33, 4.0,1,"J. Karpinsky","DWD Lindenberg","2024-07-08","2024-11-15","ISO9847 indoor"],
+    "A201900002": [9.42, 0.7,1,"J. Karpinsky","DWD Lindenberg","2024-07-08","2024-11-15","ISO9847 indoor"],
+    "A201900003": [9.57, 0.7,1,"J. Karpinsky","DWD Lindenberg","2024-07-08","2024-11-15","ISO9847 indoor"],
+    "A201900004": [9.51, 0.7,1,"J. Karpinsky","DWD Lindenberg","2024-07-08","2024-11-15","ISO9847 indoor"],
+    "A202200021": [10.78, 0.7,1,"J. Karpinsky","DWD Lindenberg","2024-07-08","2024-11-15","ISO9847 indoor"],
+    "A202200022": [10.49, 0.7,1,"J. Karpinsky","DWD Lindenberg","2024-07-08","2024-11-15","ISO9847 indoor"],
+    "A201200137": [7.49, 0.1,1,"J. Karpinsky","DWD Lindenberg","2024-09-20","2024-10-25","ISO9059 using sun as a source"],
+    "A201900005": [6.51, 0.2,1,"J. Karpinsky","DWD Lindenberg","2024-11-30","2024-12-01","ISO9059 using sun as a source"]
   },
   "2025-02-01":{ // 2024 Lindenberg calibration last missing calibration redone
-    "A202200023": [7.127,0.1]
+    "A202200023": [7.127,0.1,1,"J. Karpinsky","DWD Lindenberg","2025-02-11","2025-02-20","ISO9059 using sun as a source"]
   },
   "2025-02-12":{ // New serial MS80SH for OSCM
-    "A202500094": [11.05,0.1]
+    "A202500094": [11.05,0.1,1,"XXX","EKO INSTRUMENTS Tokyo","2025-02-12","2025-02-12","ISO/IEC9847:2023 indoor type A1"]
   },
   "2025-04-18":{ // New serial MS80SH for Melpitz
-    "A202500127": [9.8,0.54]
+    "A202500127": [9.8,0.54,1,"XXX","EKO INSTRUMENTS Tokyo","2025-04-18","2025-04-18","ISO/IEC9847:2023 indoor type A1"]
   }
 }

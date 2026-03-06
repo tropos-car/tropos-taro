@@ -181,6 +181,8 @@ def merge_config(config):
     Merge config dictionary with taro default config
     """
     default_config = get_default_config()
+    if isinstance(config,str):
+        config = read_json(config)
     if config is None:
         config = default_config
     else:
@@ -228,6 +230,7 @@ def parse_calibration(cfile,troposID, cdate=None):
     skeys = np.array(date_keys)[isort]
 
     ctimes, cfacs, cerrs = [], [], []
+    crep,cper,cloc,cstart,cend,crem = [],[],[],[],[],[]
     # lookup calibration factors
     for i, key in enumerate(skeys):
         if troposID in calib[key]:
@@ -237,6 +240,12 @@ def parse_calibration(cfile,troposID, cdate=None):
                 cerrs.append(np.nan)
             else:
                 cerrs.append(calib[key][troposID][1])
+            crep.append(calib[key][troposID][2])
+            cper.append(calib[key][troposID][3])
+            cloc.append(calib[key][troposID][4])
+            cstart.append(calib[key][troposID][5])
+            cend.append(calib[key][troposID][6])
+            crem.append(calib[key][troposID][7])
     if len(ctimes) == 0:
         return None
 
@@ -245,7 +254,13 @@ def parse_calibration(cfile,troposID, cdate=None):
             "calibration_factor": ("time", np.array(cfacs)),
             "calibration_error": ("time", np.array(cerrs)),
             "calibration_factor_units": calib['units'][0],
-            "calibration_error_units": calib['units'][1]
+            "calibration_error_units": calib['units'][1],
+            "calibration_repeats": ("time", np.array(crep)),
+            "calibration_person": ("time", np.array(cper)),
+            "calibration_location": ("time", np.array(cloc)),
+            "calibration_period_start": ("time", np.array(cstart)),
+            "calibration_period_end": ("time", np.array(cend)),
+            "calibration_remarks": ("time", np.array(crem)),
         },
         coords={
             "time": ("time",np.array(ctimes))
@@ -289,13 +304,34 @@ def meta_lookup(config, *, serial=None, troposID=None, date=None):
                                     troposID=troposID,
                                     cdate=date)
     if calibration is not None:
-        outdict.update({
-            "calibration_factor": calibration.calibration_factor.values.tolist(),
-            "calibration_error": calibration.calibration_error.values.tolist(),
-            "calibration_date": [f"{date:%Y-%m-%d}" for date in pd.to_datetime(calibration.time.values)],
-            "calibration_factor_units": calibration.calibration_factor_units.values,
-            "calibration_error_units": calibration.calibration_error_units.values
-        })
+        if "time" not in calibration.dims:
+            outdict.update({
+                "calibration_factor": float(calibration.calibration_factor.values),
+                "calibration_error": float(calibration.calibration_error.values),
+                "calibration_date": f"{pd.to_datetime(calibration.time.values):%Y-%m-%d}",
+                "calibration_factor_units": str(calibration.calibration_factor_units.values),
+                "calibration_error_units": str(calibration.calibration_error_units.values),
+                "calibration_repeats": int(calibration.calibration_repeats.values),
+                "calibration_person": str(calibration.calibration_person.values),
+                "calibration_location": str(calibration.calibration_location.values),
+                "calibration_period_start": str(calibration.calibration_period_start.values),
+                "calibration_period_end": str(calibration.calibration_period_end.values),
+                "calibration_remarks": str(calibration.calibration_remarks.values)
+            })
+        else:
+            outdict.update({
+                "calibration_factor": calibration.calibration_factor.values.tolist(),
+                "calibration_error": calibration.calibration_error.values.tolist(),
+                "calibration_date": [f"{date:%Y-%m-%d}" for date in pd.to_datetime(calibration.time.values)],
+                "calibration_factor_units": calibration.calibration_factor_units.values.tolist(),
+                "calibration_error_units": calibration.calibration_error_units.values.tolist(),
+                "calibration_repeats": calibration.calibration_repeats.values.tolist(),
+                "calibration_person": calibration.calibration_person.values.tolist(),
+                "calibration_location": calibration.calibration_location.values.tolist(),
+                "calibration_period_start": calibration.calibration_period_start.values.tolist(),
+                "calibration_period_end": calibration.calibration_period_end.values.tolist(),
+                "calibration_remarks": calibration.calibration_remarks.values.tolist()
+            })
         if "temperature_correction_coef" in calibration:
             outdict.update({
                 "temperature_correction_coef": calibration.temperature_correction_coef.values
