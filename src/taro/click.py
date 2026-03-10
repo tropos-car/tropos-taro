@@ -1295,7 +1295,7 @@ def wiser_quicklook(input_files,
     config = _configure(config)
     taro.utils.init_logger(config)
 
-    with click.progressbar(input_files, label='Make daily data quicklooks:') as files:
+    with click.progressbar(input_files, label='Make daily data quicklooks:', item_show_func=lambda a: os.path.basename(a) if a is not None else "") as files:
         for fn in files:
             fname_info = parse.parse(
                 config["wiser_out"],
