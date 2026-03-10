@@ -928,6 +928,9 @@ def asi16_keogram2(
             img_day_dates = img_dates[day_mask]
             images_day = img[day_mask]
 
+            if len(images_day)==0:
+                continue
+
             if whole_day:
                 whole_day = (sdate,edate)
 
@@ -1073,12 +1076,17 @@ def asi16_keogram3(
    
             img_day_dates = []
             images_day = []
+            empty = True
             for idt in pd.date_range(sdate,edate,freq='1min'):
                 ifname = os.path.join(keogram_inpath, f"{idt:%Y/%m/%d/}",config["asi16_out"].format(dt=idt,campaign=config["campaign"],shot=11,sfx='jpg'))
                 if not os.path.exists(ifname):
                     continue
                 images_day.append(ifname)
                 img_day_dates.append(pd.to_datetime(idt))
+                empty = False
+
+            if empty:
+                continue
 
             if whole_day:
                 whole_day = (sdate,edate)
