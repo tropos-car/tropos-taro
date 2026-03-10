@@ -1058,7 +1058,7 @@ def asi16_keogram3(
     else:
         latitude = lat
 
-    udays = pd.date_range(start_date,end_date,freq="1day")
+    udays = pd.date_range(start_date,end_date,freq="1d")
     with click.progressbar(udays, label='Make daily keogram:', item_show_func=lambda a: f"{a:%Y-%m-%d}" if a is not None else "") as udays:
         for day in udays:
             keogram_filename = os.path.join(keogram_outpath,f"{pd.to_datetime(day):%Y/%m/%Y-%m-%d}_taro-asi16_{config['campaign']}_keogram.jpg")
@@ -1068,7 +1068,7 @@ def asi16_keogram3(
             offset = 0
             if config["tzinfo"]:
                 offset = taro.utils.tz_offset(config["tzinfo"])
-            sdate = day.astype("datetime64[ns]") - np.timedelta64(offset,"s")
+            sdate = np.datetime64(day) - np.timedelta64(offset,"s")
             edate = sdate + np.timedelta64(1,"D")
    
             img_day_dates = []
