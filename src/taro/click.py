@@ -1246,8 +1246,8 @@ def wiser_l1a(input_files,
         dates.append(np.datetime64(fname_info["dt"]))
     dates, idx = np.unique(np.array(dates).astype("datetime64[D]"), return_index=True)
     pfs = np.array(pfs)[idx]
-    print(dates)
-    with click.progressbar(np.arange(len(dates)), label='Processing wiser l0 to l1a:') as idxs:
+
+    with click.progressbar(np.arange(len(dates)), label='Processing wiser l0 to l1a:', item_show_func=lambda a: f"{pd.to_datetime(dates[i]):%Y-%m-%d}") as idxs:
         for i in idxs:
             date = pd.to_datetime(dates[i])
             pf = pfs[i]
