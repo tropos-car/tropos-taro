@@ -388,13 +388,20 @@ def wiser_to_l1a(date, pf, *, config=None, global_attrs=None):
             #print("An exception occurred:", error)
             logger.error("An exception occurred: " + str(error))
             continue
+        if time.size <=1:
+            logger.error(f"Skip empty file: {fname.format(dt=datetime + dt.timedelta(hours=int(hour)),campaign=config['campaign'], sfx='CSV' )}")
+            continue
+
         wvls = df.values[7:, 0].astype(float)  # [nm]
-        if wvls.size == 0:
+        if wvls.size <=1:
             logger.error(f"Skip empty file: {fname.format(dt=datetime + dt.timedelta(hours=int(hour)),campaign=config['campaign'], sfx='CSV' )}")
             continue
 
         values_711 = (df.values[7:, 1::3].astype(float).T) * 1e-3  # [W m-2 nm-1]
         values_713 = (df.values[7:, 2::3].astype(float).T) * 1e-3  # [W m-2 nm-1]
+        if values_711.shape[0]!=values_713.shape[0]:
+            logger.error(f"Skip file with inconsitent time steps: {fname.format(dt=datetime + dt.timedelta(hours=int(hour)),campaign=config['campaign'], sfx='CSV' )}")
+            continue
         values_merge = (df.values[7:, 3::3].astype(float).T) * 1e-3  # [W m-2 nm-1]
         exposure_711 = df.values[3, 1::3].astype(float)  # [ms]
         exposure_713 = df.values[3, 2::3].astype(float)  # [ms]
