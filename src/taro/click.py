@@ -1314,6 +1314,8 @@ def wiser_quicklook(input_files,
                 continue
 
             ds = xr.load_dataset(fn)
+            if "dflx_sp_wiser" not in ds:
+                continue
 
 
             # load additional data based on timezone information
