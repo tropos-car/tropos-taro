@@ -261,9 +261,7 @@ def ql_data(input_files, output_path, skip_exists, config,dpi):
                 add_date = (np.datetime64(fname_info["dt"]) - np.timedelta64(offset,"s")).astype("datetime64[D]")
                 add_date = pd.to_datetime(add_date)
                 add_file = fn.replace(f"{fname_info['dt']:%Y/%m/%Y-%m-%d}",f"{add_date:%Y/%m/%Y-%m-%d}")
-                print(add_file)
                 if os.path.exists(add_file):
-                    print(add_file)
                     add_ds = xr.load_dataset(add_file)
                     ds_l1b = taro.futils.merge_ds(add_ds,ds_l1b)
                     # add time offset
@@ -348,9 +346,9 @@ def ql_quality(input_files: list, output_path: str, skip_exists:bool, config: di
                 add_date = (np.datetime64(fname_info["dt"]) - np.timedelta64(offset,"s")).astype("datetime64[D]")
                 add_date = pd.to_datetime(add_date)
                 add_file = fn.replace(f"{fname_info['dt']:%Y/%m/%Y-%m-%d}",f"{add_date:%Y/%m/%Y-%m-%d}")
-                print(add_file)
+
                 if os.path.exists(add_file):
-                    print(add_file)
+
                     add_ds = xr.load_dataset(add_file)
                     ds_l1b = taro.futils.merge_ds(add_ds,ds_l1b)
                     # add time offset
@@ -1247,9 +1245,9 @@ def wiser_l1a(input_files,
     dates, idx = np.unique(np.array(dates).astype("datetime64[D]"), return_index=True)
     pfs = np.array(pfs)[idx]
 
-    with click.progressbar(np.arange(len(dates)), label='Processing wiser l0 to l1a:', item_show_func=lambda a: str(dates[a]).strip()) as idxs:
-        for i in idxs:
-            date = pd.to_datetime(dates[i])
+    dates = pd.to_datetime(dates)
+    with click.progressbar(dates, label='Processing wiser l0 to l1a:', item_show_func=lambda a: f"{a:%Y-%m-%d}" if a is not None else "") as pdates:    
+        for i,date in enumerate(pdates):
             pf = pfs[i]
 
             fname_info = {

@@ -10,6 +10,9 @@ from unitpy import Unit
 from toolz import keyfilter, valfilter, assoc_in
 import trosat.sunpos as sp
 
+import warnings
+warnings.filterwarnings('ignore', category=RuntimeWarning)   
+
 import taro
 import taro.utils
 import taro.futils
