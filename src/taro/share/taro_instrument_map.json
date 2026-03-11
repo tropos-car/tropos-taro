@@ -118,6 +118,16 @@
     "device": "Pyrgeometer CGR4 PT100, Kipp & Zonen",
     "station": "TARO-LACROS"
   },
+  "A202300155": {
+    "serial": "EX23058.01",
+    "device": "Spectrometer MS-711N, Eko Instruments",
+    "station": "TARO-Melpitz"
+  },
+  "A202300156": {
+    "serial": "EX23058.02",
+    "device": "Spectrometer MS-713, Eko Instruments",
+    "station": "TARO-Melpitz"
+  },
   // TARO-3 (Melpitz-Spare)
   "A201800102": {
     "serial": "6216",
@@ -293,5 +303,15 @@
     "station": "TARO-Melpitz",
     "wrmc_id": 87005,
     "date_purchase": "2025-04"
+  },
+  "A202500066": {
+    "serial": "EX24566.01",
+    "device": "Spectrometer MS-711N, Eko Instruments",
+    "station": "TARO-Melpitz"
+  },
+  "A202500067": {
+    "serial": "EX24566.02",
+    "device": "Spectrometer MS-713, Eko Instruments",
+    "station": "TARO-Melpitz"
   }
 }
