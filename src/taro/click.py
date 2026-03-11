@@ -50,9 +50,11 @@ def cli():
 @click.argument("output_path", nargs=1)
 @click.option("--config", "-c", type=click.Path(dir_okay=False, exists=True),
               help="Config file - will merge and override the default config.")
+@click.option("--compress","-z",is_flag=True, help="Toggles (gnu)zipping of raw files.")
 def raw2daily(input_path: str,
               output_path: str,
-              config):
+              config,
+              compress:bool):
     """
     Moves data lines from the  continuous Loggernet files within input path (table names specified in config) to daily files in output path.
     The output path is suffixed according to config['path_sfx'] (default is '{dt:%Y/%m/}').
@@ -65,7 +67,8 @@ def raw2daily(input_path: str,
     taro.futils.raw2daily(
        inpath=os.path.abspath(input_path),
        outpath=os.path.abspath(output_path),
-       config=config
+       config=config,
+       compress=compress
     )
 
 ##########################

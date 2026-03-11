@@ -1,4 +1,5 @@
 import os
+import gzip
 import pandas as pd
 import numpy as np
 import xarray as xr
@@ -10,8 +11,12 @@ import taro.utils
 
 logger = logging.getLogger(__name__)
 
-def raw2daily(inpath, outpath, tables=None, config=None):
+def raw2daily(inpath, outpath, tables=None, config=None, compress=True):
     config = taro.utils.merge_config(config)
+    openfunc = gzip.open if compress else open
+    openmode_write = 'wt' if compress else 'w'
+    openmode_append = 'at' if compress else 'a'
+    sfx = 'dat.gz' if compress else 'dat'
 
     # if None, process all available tables (from config)
     if tables is None:
@@ -64,16 +69,16 @@ def raw2daily(inpath, outpath, tables=None, config=None):
                 outpath,
                 config["path_sfx"],
                 config["fname_out"]
-            ).format(dt=uday, resolution='full', datalvl='l0', sfx='dat', table=table, **config)
+            ).format(dt=uday, resolution='full', datalvl='l0', sfx=sfx, table=table, **config)
             # create directory structure
             os.makedirs(os.path.dirname(outfname), exist_ok=True)
             # write daily file
             if not os.path.exists(outfname):
-                with open(outfname, 'w') as txt:
+                with openfunc(outfname, mode=openmode_write) as txt:
                     # write header
                     txt.writelines(datalines[:4])
             # append data lines
-            with open(outfname,'a') as txt:
+            with openfunc(outfname,mode=openmode_append) as txt:
                 # write content
                 islice = slice(idays[i],idays[i+1])
                 txt.writelines(datalines[islice])
