@@ -274,6 +274,11 @@ def to_l1b(ds_l1a, resolution, *, config=None):
             ds_l1b[var].attrs.update({
                 "calibration_function": "flux (W m-2) = flux (V) * calibration_factor (W m-2 V-1)",
             })
+
+        # mask data errors
+        errmask = ds_l1b[var].values < -10 # lower negative 10 Wm-2
+        ds_l1b[var].values[errmask] = np.nan
+
         # add new attributes and encoding to calibrated flux vars
         ds_l1b[var].attrs.update({
             "units": "W m-2",

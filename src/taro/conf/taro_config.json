@@ -24,7 +24,7 @@
   "collection": 1, //Processing collection
   "coordinates": null, // null or [latitude (degN), longitude (degE), altitude (m)]
   // quicklook config
-  "tzinfo": null, // null -> use UTC as default; IANA-NAME (e.g. "Europe/Berlin") to consiter local time for timeseries plots
+  "tzinfo": null, // null -> use UTC as default; IANA-NAME (e.g. "Europe/Berlin") to consider local time for timeseries plots
   // asi16 config
   "asi16_id": "", // Tropos ID of ASI-16 camera
   // wiser config

@@ -188,8 +188,8 @@ class STATION:
         # rotate to start with north proceeding clockwise
         isort = np.argmin(azi)
         if isort !=0 :
-            azi = np.concat((azi[isort:],azi[:isort]),axis=0)
-            ele = np.concat((ele[isort:],ele[:isort]),axis=0)
+            azi = np.concatenate((azi[isort:],azi[:isort]),axis=0)
+            ele = np.concatenate((ele[isort:],ele[:isort]),axis=0)
 
         u,c = np.unique(azi,return_counts=True)
         if np.any(c>1):
@@ -217,7 +217,6 @@ class BSRN:
         if os.path.isfile(input):
             input = os.path.join(os.path.dirname(input),"*.nc")
         self.fnames = sorted(glob.glob(input))
-
         l1b, attrs_catalog = self.load_l1b()
         self._l1b = l1b
         self._attrs_catalog = attrs_catalog
@@ -301,8 +300,9 @@ class BSRN:
         # check requirements for bsrn (calibrated, 1min resolution)
         if ("processing_level" not in l1b.attrs) or (l1b.processing_level != 'l1b'):
             raise AttributeError("Dataset must have a 'processing_level='l1b'' attribute.")
-        res = np.unique_counts(l1b.time.values.astype("datetime64[m]"))
-        if np.any(res.counts>1):
+        # res = np.unique_counts(l1b.time.values.astype("datetime64[m]"))
+        _,counts = np.unique(l1b.time.values.astype("datetime64[m]"),return_counts=True)
+        if np.any(counts>1):
             raise AttributeError("Dataset must be in 1min resolution without double values.")
         
         # init attribute catalog
@@ -505,7 +505,7 @@ class BSRN:
         lines = [
             "*C0005\n",
             " -1 -1 -1 N\n",
-            f"{'XXX':30.30s} {'XXX':25.25s} -1 -1 -1 -1 {'XXX':5.5s}\n",
+            f"{'XXX':30.30s} {'XXX':25.25s} {0:03d} -1 -1 -1 -1 {'XXX':5.5s}\n",
             f"{'XXX':80.80}\n"
         ]
         return lines
@@ -565,7 +565,7 @@ class BSRN:
             max_zen_dni = -1,
             min_ele_spc = -1,
             calib_loc = 'XXX',
-            calib_persopn = 'XXX',
+            calib_person = 'XXX',
             calib1_start = 'XXX',
             calib1_end = 'XXX',
             calib1_no = 1,
@@ -616,15 +616,15 @@ class BSRN:
                     ))
                 if "date_purchase" in imeta:
                     imeta.update(dict(
-                        date_purchase = f"{pd.to_datetime(imeta["date_purchase"]):%m/%d/%y}"
+                        date_purchase = f"{pd.to_datetime(imeta['date_purchase']):%m/%d/%y}"
                     ))
 
                 imeta.update(dict(
                     calib1_fac = imeta["calibration_factor"],
                     calib1_no = imeta["calibration_repeats"],
                     calib1_err = imeta["calibration_factor"]*imeta["calibration_error"]*1e-2, # standard error in calibration factor units
-                    calib1_start = f"{pd.to_datetime(imeta["calibration_period_start"]):%m/%d/%y}",
-                    calib1_end = f"{pd.to_datetime(imeta["calibration_period_end"]):%m/%d/%y}",
+                    calib1_start = f"{pd.to_datetime(imeta['calibration_period_start']):%m/%d/%y}",
+                    calib1_end = f"{pd.to_datetime(imeta['calibration_period_end']):%m/%d/%y}",
                     calib_units = imeta["calibration_factor_units"],
                     calib_person = imeta["calibration_person"],
                     calib_loc = imeta["calibration_location"],
