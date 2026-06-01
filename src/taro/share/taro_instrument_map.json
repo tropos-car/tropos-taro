@@ -83,6 +83,11 @@
     "device": "Pyranometer ML-01, Eko Instruments",
     "station": "TARO-LACROS"
   },
+  "S17139315": {
+    "serial": "S17139315",
+    "device": "Pyranometer ML-01, Eko Instruments",
+    "station": "TARO-LACROS"
+  },
   "A201700002": {
     "serial": "3843",
     "device": "Logger CR1000, Campbell Sci.",

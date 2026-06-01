@@ -230,7 +230,7 @@ def parse_calibration(cfile,troposID, cdate=None):
     skeys = np.array(date_keys)[isort]
 
     ctimes, cfacs, cerrs = [], [], []
-    crep,cper,cloc,cstart,cend,crem = [],[],[],[],[],[]
+    crep,cper,cloc,cstart,cend,cno,crem = [],[],[],[],[],[],[]
     # lookup calibration factors
     for i, key in enumerate(skeys):
         if troposID in calib[key]:
@@ -245,7 +245,8 @@ def parse_calibration(cfile,troposID, cdate=None):
             cloc.append(calib[key][troposID][4])
             cstart.append(calib[key][troposID][5])
             cend.append(calib[key][troposID][6])
-            crem.append(calib[key][troposID][7])
+            cno.append(calib[key][troposID][7])
+            crem.append(calib[key][troposID][8])
     if len(ctimes) == 0:
         return None
 
@@ -260,6 +261,7 @@ def parse_calibration(cfile,troposID, cdate=None):
             "calibration_location": ("time", np.array(cloc)),
             "calibration_period_start": ("time", np.array(cstart)),
             "calibration_period_end": ("time", np.array(cend)),
+            "calibration_cert_no": ("time", np.array(cno)),
             "calibration_remarks": ("time", np.array(crem)),
         },
         coords={
@@ -291,6 +293,7 @@ def meta_lookup(config, *, serial=None, troposID=None, date=None):
         "calibration_date": None,
         "calibration_factor_units": None,
         "calibration_error_units": None,
+        "calibration_cert_no": None,
     }
 
     if troposID is None:
@@ -316,6 +319,7 @@ def meta_lookup(config, *, serial=None, troposID=None, date=None):
                 "calibration_location": str(calibration.calibration_location.values),
                 "calibration_period_start": str(calibration.calibration_period_start.values),
                 "calibration_period_end": str(calibration.calibration_period_end.values),
+                "calibration_cert_no": str(calibration.calibration_cert_no.values),
                 "calibration_remarks": str(calibration.calibration_remarks.values)
             })
         else:
@@ -330,6 +334,7 @@ def meta_lookup(config, *, serial=None, troposID=None, date=None):
                 "calibration_location": calibration.calibration_location.values.tolist(),
                 "calibration_period_start": calibration.calibration_period_start.values.tolist(),
                 "calibration_period_end": calibration.calibration_period_end.values.tolist(),
+                "calibration_cert_no": calibration.calibration_cert_no.values.tolist(),
                 "calibration_remarks": calibration.calibration_remarks.values.tolist()
             })
         if "temperature_correction_coef" in calibration:
