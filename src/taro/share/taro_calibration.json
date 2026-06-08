@@ -130,13 +130,16 @@
   "2025-04-18":{ // New serial MS80SH for Melpitz
     "A202500127": [9.8, 0.54, 1, "XXX", "EKO INSTRUMENTS Tokyo", "2025-04-18", "2025-04-18", "S250003990-EX25-268", "ISO/IEC9847:2023 indoor type A1"]
   },
-  "2026-05-12":{ // 2026 Lindenberg calibration 1st batch
+  "2026-05-12":{ // 2026 Lindenberg calibration 1st batch 1/2
     "A201900002": [9.39, 0.6, 1, "J. Karpinsky", "DWD Lindenberg", "2026-04-08", "2026-04-29", "2026/09/01", "ISO9846 continuos sun-and-shade method"],
     "A201900003": [9.39, 0.6, 1, "J. Karpinsky", "DWD Lindenberg", "2026-04-08", "2026-04-29", "2026/09/02", "ISO9846 continuos sun-and-shade method"],
     "A201900004": [9.41, 0.6, 1, "J. Karpinsky", "DWD Lindenberg", "2026-04-08", "2026-04-29", "2026/09/03", "ISO9846 continuos sun-and-shade method"],
     "A201900005": [6.51, 0.1, 1, "J. Karpinsky", "DWD Lindenberg", "2026-04-23", "2024-04-29", "2026/09/04", "ISO9059 using sun as a source"],
     "A201200139": [8.73, 0.7, 1, "J. Karpinsky", "DWD Lindenberg", "2026-04-08", "2026-04-29", "2026/09/05", "ISO9846 continuos sun-and-shade method"],
-    "A201200140": [8.92, 0.7, 1, "J. Karpinsky", "DWD Lindenberg", "2026-04-08", "2026-04-29", "2026/09/05", "ISO9846 continuos sun-and-shade method"]
-
+    "A201200140": [8.92, 0.7, 1, "J. Karpinsky", "DWD Lindenberg", "2026-04-08", "2026-04-29", "2026/09/06", "ISO9846 continuos sun-and-shade method"]
+  },
+  "2026-06-02":{ // 2026 Lindenberg calibration 1st batch 2/2
+    "A201200141": [13.46, 3.6, 1, "J. Karpinsky", "DWD Lindenberg", "2026-04-30", "2026-06-01", "2026/09/07", "Comparison to reference at night"],
+    "A201700050": [11.43, 3.5, 1, "J. Karpinsky", "DWD Lindenberg", "2026-04-30", "2026-06-01", "2026/09/08", "Comparison to reference at night"]
   }
 }

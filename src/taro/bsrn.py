@@ -39,7 +39,7 @@ class QUANTITIES:
         air_pressure = 23
 
 class QUANTITIES_RAW:
-    surface_downwelling_shortwave_flux_in_air = "swd03",
+    surface_downwelling_shortwave_flux_in_air = "swd03"
     surface_direct_along_beam_shortwave_flux_in_air = "dirn"
     surface_diffuse_downwelling_shortwave_flux_in_air = "dif"
     surface_downwelling_longwave_flux_in_air = "lwd03"
@@ -206,9 +206,8 @@ class STATION:
         ax.set_theta_zero_location(loc="N")
         return fig,ax
 
-
 class BSRN:
-    def __init__(self,input,bsrn_path='.',config=None,version=None):
+    def __init__(self,input,bsrn_path='.',remarks="XXX",mask_periods=None,config=None,version=None):
         config = taro.utils.merge_config(config)
         self.config = config
 
@@ -217,10 +216,14 @@ class BSRN:
         if os.path.isfile(input):
             input = os.path.join(os.path.dirname(input),"*.nc")
         self.fnames = sorted(glob.glob(input))
-        l1b, attrs_catalog = self.load_l1b()
+        l1b, attrs_catalog = self.load_l1b(mask_periods)
         self._l1b = l1b
         self._attrs_catalog = attrs_catalog
         
+        chunks=80
+        self.remarks = [ remarks[i:i+chunks] for i in range(0,len(remarks),chunks) ]
+        print(self.remarks)
+
         self.station = STATION(l1b.site)
         self.bsrn_path = os.path.abspath(bsrn_path)
         if version is None:
@@ -234,8 +237,112 @@ class BSRN:
                 self.version = 1
         else:
             self.version = version
+
+    def prepare_metadata(self,sname,imeta):
+        meta_default = dict(
+            manufacturer = 'XXX',
+            model = 'XXX',
+            serial = 'XXX',
+            date_purchase = 'XXX',
+            wrmc_id = -1,
+            remarks = 'XXX',
+            pge_bcc = -1,
+            pge_dcc = -1,
+            wvl1 = -1.,
+            bw1 = -1.,
+            wvl2 = -1.,
+            bw2 = -1.,
+            wvl3 = -1.,
+            bw3 = -1.,
+            max_zen_dni = -1,
+            min_ele_spc = -1,
+            calib_loc = 'XXX',
+            calib_person = 'XXX',
+            calib1_start = 'XXX',
+            calib1_end = 'XXX',
+            calib1_no = 1,
+            calib1_fac = -1.,
+            calib1_err = -1.,
+            calib2_start = 'XXX',
+            calib2_end = 'XXX',
+            calib2_no = 1,
+            calib2_fac = -1.,
+            calib2_err = -1.,
+            calib3_start = 'XXX',
+            calib3_end = 'XXX',
+            calib3_no = 1,
+            calib3_fac = -1.,
+            calib3_err = -1.,
+            calib_units = 'XXX',
+            calib_remarks = 'XXX',
+            cert_code = "XXX",
+        )
+        if "device" in imeta:
+            imeta.update(dict(
+                manufacturer = imeta["device"].split(",")[-1].strip(),
+                model = imeta["device"].split(",")[0].split()[-1].strip()
+            ))
+        if "date_purchase" in imeta:
+            imeta.update(dict(
+                date_purchase = f"{pd.to_datetime(imeta['date_purchase']):%m/%d/%y}"
+            ))
+
+        imeta.update(dict(
+            calib1_fac = imeta["calibration_factor"],
+            calib1_no = imeta["calibration_repeats"],
+            calib1_err = imeta["calibration_factor"]*imeta["calibration_error"]*1e-2, # standard error in calibration factor units
+            calib1_start = f"{pd.to_datetime(imeta['calibration_period_start']):%m/%d/%y}",
+            calib1_end = f"{pd.to_datetime(imeta['calibration_period_end']):%m/%d/%y}",
+            calib_units = imeta["calibration_factor_units"],
+            calib_person = imeta["calibration_person"],
+            calib_loc = imeta["calibration_location"],
+            calib_remarks = imeta["calibration_remarks"],
+            cert_code = imeta["calibration_cert_no"]
+        ))
+
+        if sname == "surface_downwelling_longwave_flux_in_air":
+            imeta.update(
+                dict(
+                    pge_bcc = self.station.pge_body_temp_compensation,
+                    pge_dcc = self.station.pge_dome_temp_compensation
+                )
+            )
+            if "temperature_correction_coef" in imeta:
+                a,b,c = imeta["temperature_correction_coef"]
+                imeta.update(
+                    dict(
+                        tc_a = a,
+                        tc_b = b,
+                        tc_c = c,
+                        remarks = f"BTC: U/U0=1{a:+.4e}T^2{b:+.4e}T{c:+.4e}"
+                    )
+                )
+            if self.station.pge_dome_temp_compensation in [DTC.shaded,DTC.shaded_temperature,DTC.shaded_ventilated,DTC.shaded_ventilated_temperature]:
+                if "remarks" in imeta:
+                    imeta.update(
+                        dict(
+                            remarks = imeta["remarks"] + f"; {self.station.remarks_shading}"
+                        )
+                    )
+                else:
+                    imeta.update(
+                        dict(
+                            remarks = self.station.remarks_shading
+                        )
+                    )
+        if sname == "surface_diffuse_downwelling_shortwave_flux_in_air":
+            imeta.update(
+                    dict(
+                        remarks = self.station.remarks_shading
+                    )
+                )
+
+        
+        # merge with defaults
+        imeta = {**meta_default, **imeta}
+        return imeta
     
-    def load_l1b(self):
+    def load_l1b(self, mask_periods=None):
         def _update_attrs_catalog(catalog,new):
             """compare attributes dictionary and merge if an update happend.
             Expectes catalogs in the form {'var1':{**attrs,'time':datetime64}, 'var2'...}
@@ -251,6 +358,9 @@ class BSRN:
                 else:
                     a = x[0]
                     m = [x[0]]
+                # if only one element, just return it
+                if len(x)==1:
+                    return m
                 # compare and if equal just return the first element
                 if a == x[1]:
                     return m
@@ -324,6 +434,31 @@ class BSRN:
 
             l1b = xr.concat((l1b,l1b_tmp),dim='time',combine_attrs="override")
         
+        # mask periods
+        if mask_periods is not None:
+            for period in mask_periods:
+                mask = ( (l1b.time < period.start) + (l1b.time > period.stop) )
+                l1b = l1b.where(mask)
+
+        # mask unphysical jumps
+        mask = np.full(l1b.time.size, True)
+        for var in l1b:
+            if var.endswith("_max"):
+                mask *= l1b[var]<2000.
+            if var.endswith("_min"):
+                mask *= l1b[var]>-10.
+            if var.endswith("_std"):
+                mask *= l1b[var]<2000.
+        l1b = l1b.where(mask)
+
+        # fill gaps with nan
+        day1 = l1b.time.values[0].astype("datetime64[M]")
+        month_period = pd.Period(day1, freq='M')
+        start = month_period.start_time
+        end = month_period.end_time
+        full_range =  pd.date_range(start=start, end=end, freq='1min')
+        l1b = l1b.reindex(time=full_range)
+                                    
         return l1b,attrs_catalog
 
 
@@ -447,8 +582,32 @@ class BSRN:
     def lr_0003(self):
         lines = [
             "*C0003\n",
-            f"{'XXX':80.80s}\n"
         ]
+        for line in self.remarks:
+            lines.append(f"{line:80.80s}\n")
+        # add required LR4000 metadata
+        # iterate catalog variables, look for long wave radiation
+        for var in self._attrs_catalog.values():
+            if var["standard_name"][0] != "surface_downwelling_longwave_flux_in_air":
+                continue
+            date_of_change = pd.to_datetime(var["time"][-1])
+            imeta = taro.utils.meta_lookup(
+                date = date_of_change,
+                troposID=var["troposID"][-1],
+                config=self.config
+            )
+            imeta = self.prepare_metadata(var["standard_name"][-1],imeta=imeta)
+            # add lines
+            # lw_meta_line = "@LR4000CONST, {serial}, {wrmc_id}, {cert_code}, {calib1_fac:12.4f}\n"
+            if "temperature_correction_coef" in imeta:
+                ## TODO: add cert_code to self.prepare_metadata
+                lw_meta_line1 = "@LR4000POLI2, {serial}, {wrmc_id}, {cert_code},&\n"
+                lw_meta_line2 = f"{' ':13.13s} "+"{calib1_fac:.4f}, {tc_a:12.4e}, {tc_b:12.4e}, {tc_c:12.4e}\n"
+                lines += [ 
+                    lw_meta_line1.format_map(imeta),
+                    lw_meta_line2.format_map(imeta)      
+                ]   
+
         return lines
     
     @property
@@ -505,7 +664,7 @@ class BSRN:
         lines = [
             "*C0005\n",
             " -1 -1 -1 N\n",
-            f"{'XXX':30.30s} {'XXX':25.25s} {0:03d} -1 -1 -1 -1 {'XXX':5.5s}\n",
+            f"{'XXX':30.30s} {'XXX':25.25s} {-1:3d} -1 -1 -1 -1 {'XXX':5.5s}\n",
             f"{'XXX':80.80}\n"
         ]
         return lines
@@ -547,43 +706,6 @@ class BSRN:
             "UNIT OF CAL. COEFF.: {calib_units:59.59s}\n",
             "{calib_remarks:80.80s}\n",
         ]
-        meta_default = dict(
-            manufacturer = 'XXX',
-            model = 'XXX',
-            serial = 'XXX',
-            date_purchase = 'XXX',
-            wrmc_id = -1,
-            remarks = 'XXX',
-            pge_bcc = -1,
-            pge_dcc = -1,
-            wvl1 = -1.,
-            bw1 = -1.,
-            wvl2 = -1.,
-            bw2 = -1.,
-            wvl3 = -1.,
-            bw3 = -1.,
-            max_zen_dni = -1,
-            min_ele_spc = -1,
-            calib_loc = 'XXX',
-            calib_person = 'XXX',
-            calib1_start = 'XXX',
-            calib1_end = 'XXX',
-            calib1_no = 1,
-            calib1_fac = -1.,
-            calib1_err = -1.,
-            calib2_start = 'XXX',
-            calib2_end = 'XXX',
-            calib2_no = 1,
-            calib2_fac = -1.,
-            calib2_err = -1.,
-            calib3_start = 'XXX',
-            calib3_end = 'XXX',
-            calib3_no = 1,
-            calib3_fac = -1.,
-            calib3_err = -1.,
-            calib_units = 'XXX',
-            calib_remarks = 'XXX'
-        )
 
         # init lines
         lines = [
@@ -608,66 +730,7 @@ class BSRN:
                     troposID=var["troposID"][i],
                     config=self.config
                 )
-
-                if "device" in imeta:
-                    imeta.update(dict(
-                        manufacturer = imeta["device"].split(",")[-1].strip(),
-                        model = imeta["device"].split(",")[0].split()[-1].strip()
-                    ))
-                if "date_purchase" in imeta:
-                    imeta.update(dict(
-                        date_purchase = f"{pd.to_datetime(imeta['date_purchase']):%m/%d/%y}"
-                    ))
-
-                imeta.update(dict(
-                    calib1_fac = imeta["calibration_factor"],
-                    calib1_no = imeta["calibration_repeats"],
-                    calib1_err = imeta["calibration_factor"]*imeta["calibration_error"]*1e-2, # standard error in calibration factor units
-                    calib1_start = f"{pd.to_datetime(imeta['calibration_period_start']):%m/%d/%y}",
-                    calib1_end = f"{pd.to_datetime(imeta['calibration_period_end']):%m/%d/%y}",
-                    calib_units = imeta["calibration_factor_units"],
-                    calib_person = imeta["calibration_person"],
-                    calib_loc = imeta["calibration_location"],
-                    calib_remarks = imeta["calibration_remarks"],
-                ))
-
-                if var["standard_name"][i] == "surface_downwelling_longwave_flux_in_air":
-                    imeta.update(
-                        dict(
-                            pge_bcc = self.station.pge_body_temp_compensation,
-                            pge_dcc = self.station.pge_dome_temp_compensation
-                        )
-                    )
-                    if "temperature_correction_coef" in imeta:
-                        a,b,c = imeta["temperature_correction_coef"]
-                        imeta.update(
-                            dict(
-                                remarks = f"BTC: U/U0=1{a:+.4e}T^2{b:+.4e}T{c:+.4e}"
-                            )
-                        )
-                    if self.station.pge_dome_temp_compensation in [DTC.shaded,DTC.shaded_temperature,DTC.shaded_ventilated,DTC.shaded_ventilated_temperature]:
-                        if "remarks" in imeta:
-                            imeta.update(
-                                dict(
-                                    remarks = imeta["remarks"] + f"; {self.station.remarks_shading}"
-                                )
-                            )
-                        else:
-                            imeta.update(
-                                dict(
-                                    remarks = self.station.remarks_shading
-                                )
-                            )
-                if var["standard_name"][i] == "surface_diffuse_downwelling_shortwave_flux_in_air":
-                    imeta.update(
-                            dict(
-                                remarks = self.station.remarks_shading
-                            )
-                        )
-
-                
-                # merge with defaults
-                imeta = {**meta_default, **imeta}
+                imeta = self.prepare_metadata(var["standard_name"][i],imeta=imeta)
 
                 # add lines
                 lines += [ line.format_map(imeta) for line in meta_lines ]
@@ -705,8 +768,8 @@ class BSRN:
             "*C0100\n"
         ]
         ghi_var = list(self._l1b.filter_by_attrs(standard_name="surface_downwelling_shortwave_flux_in_air"))[0]
-        dhi_var = list(self._l1b.filter_by_attrs(standard_name="surface_direct_along_beam_shortwave_flux_in_air"))[0]
-        dni_var = list(self._l1b.filter_by_attrs(standard_name="surface_downwelling_shortwave_flux_in_air"))[0]
+        dni_var = list(self._l1b.filter_by_attrs(standard_name="surface_direct_along_beam_shortwave_flux_in_air"))[0]
+        dhi_var = list(self._l1b.filter_by_attrs(standard_name="surface_diffuse_downwelling_shortwave_flux_in_air"))[0]
         lw_var = list(self._l1b.filter_by_attrs(standard_name="surface_downwelling_longwave_flux_in_air"))[0]
         tair_var = list(self._l1b.filter_by_attrs(standard_name="air_temperature"))[0]
         rh_var = list(self._l1b.filter_by_attrs(standard_name="relative_humidity"))[0]
@@ -717,25 +780,44 @@ class BSRN:
             date = pd.to_datetime(ds.time.values[i])
             day = int(date.day)
             minute = int(date.hour*60 + date.minute)
-            ghi = int(round(ds[ghi_var].values[i],0))
-            ghi_min = int(round(ds[ghi_var+'_min'].values[i],0))
-            ghi_max = int(round(ds[ghi_var+'_max'].values[i],0))
-            ghi_std = float(round(ds[ghi_var+'_std'].values[i],1))
-            dhi = int(round(ds[dhi_var].values[i],0))
-            dhi_min = int(round(ds[dhi_var+'_min'].values[i],0))
-            dhi_max = int(round(ds[dhi_var+'_max'].values[i],0))
-            dhi_std = float(round(ds[dhi_var+'_std'].values[i],1))
-            dni = int(round(ds[dni_var].values[i],0))
-            dni_min = int(round(ds[dni_var+'_min'].values[i],0))
-            dni_max = int(round(ds[dni_var+'_max'].values[i],0))
-            dni_std = float(round(ds[dni_var+'_std'].values[i],1))
-            lw = int(round(ds[lw_var].values[i],0))
-            lw_min = int(round(ds[lw_var+'_min'].values[i],0))
-            lw_max = int(round(ds[lw_var+'_max'].values[i],0))
-            lw_std = float(round(ds[lw_var+'_std'].values[i],1))
-            pres = int(round(ds[pres_var].values[i]/100.,0))
-            rh = float(round(ds[rh_var].values[i]*100.,1))
-            tair = float(round(ds[tair_var].values[i]-273.15,1))
+            v = round(ds[ghi_var].values[i],0)
+            ghi = int(v) if not np.isnan(v) else -999
+            v = round(ds[ghi_var+'_min'].values[i],0)
+            ghi_min = int(v) if not np.isnan(v) else -999
+            v = round(ds[ghi_var+'_max'].values[i],0)
+            ghi_max = int(v) if not np.isnan(v) else -999
+            v = round(ds[ghi_var+'_std'].values[i],1)
+            ghi_std = float(v) if not np.isnan(v) else -99.9
+            v = round(ds[dhi_var].values[i],0)
+            dhi = int(v) if not np.isnan(v) else -999
+            v = round(ds[dhi_var+'_min'].values[i],0)
+            dhi_min = int(v) if not np.isnan(v) else -999
+            v = round(ds[dhi_var+'_max'].values[i],0)
+            dhi_max = int(v) if not np.isnan(v) else -999
+            v = round(ds[dhi_var+'_std'].values[i],1)
+            dhi_std = float(v) if not np.isnan(v) else -99.9
+            v = round(ds[dni_var].values[i],0)
+            dni = int(v) if not np.isnan(v) else -999
+            v = round(ds[dni_var+'_min'].values[i],0)
+            dni_min = int(v) if not np.isnan(v) else -999
+            v = round(ds[dni_var+'_max'].values[i],0)
+            dni_max = int(v) if not np.isnan(v) else -999
+            v = round(ds[dni_var+'_std'].values[i],1)
+            dni_std = float(v) if not np.isnan(v) else -99.9
+            v = round(ds[lw_var].values[i],0)
+            lw = int(v) if not np.isnan(v) else -999
+            v = round(ds[lw_var+'_min'].values[i],0)
+            lw_min = int(v) if not np.isnan(v) else -999
+            v = round(ds[lw_var+'_max'].values[i],0)
+            lw_max = int(v) if not np.isnan(v) else -999
+            v = round(ds[lw_var+'_std'].values[i],1)
+            lw_std = float(v) if not np.isnan(v) else -99.9
+            v = round(ds[pres_var].values[i]/100.,0)
+            pres = int(v) if not np.isnan(v) else -999
+            v = round(ds[rh_var].values[i]*100.,1)
+            rh = float(v) if not np.isnan(v) else -99.9
+            v = round(ds[tair_var].values[i]-273.15,1)
+            tair = float(v) if not np.isnan(v) else -99.9
 
             line = f" {day:2d} {minute:4d}"
             # ghi
@@ -766,9 +848,11 @@ class BSRN:
             date = pd.to_datetime(ds.time.values[i])
             day = int(date.day)
             minute = int(date.hour*60 + date.minute)
-            pgetmp = float(round(ds[pgetemp_var].values[i]-273.15,2))
+            v = round(ds[pgetemp_var].values[i]-273.15,2)
+            pgetmp = float(v) if not np.isnan(v) else -99.99
             pgev0 = ds[lw_var].values[i] - 5.670367e-8*ds[pgetemp_var].values[i]**4
-            pgev0 = float(round(pgev0,1))
+            v = round(pgev0,1)
+            pgev0 = float(v) if not np.isnan(v) else -999.9
             line = f" {day:2d} {minute:4d}"
             line+= f" {-99.99:6.2f} {-99.99:6.2f} {-99.99:6.2f} {pgetmp:6.2f} {pgev0:6.1f}"
             line+= f"  {-99.99:6.2f} {-99.99:6.2f} {-99.99:6.2f} {-99.99:6.2f} {-999.9:6.1f}\n"
@@ -801,6 +885,7 @@ class BSRN:
         }
 
         name_map = {}
+        dropvar = []
         for var in self._l1b:
             unit = self._l1b[var].attrs["units"]
             if unit in unit_map:
@@ -808,13 +893,16 @@ class BSRN:
                 self._l1b[var].values = offset + self._l1b[var].values*scale
 
             sname = self._l1b[var].attrs["standard_name"]
+            if sname not in mapping:
+                dropvar.append(var)
+                continue
             sname = sname.replace("min_","").replace("max_","").replace("std_","")
             name = mapping[sname]
             if var.endswith("min") or var.endswith("max") or var.endswith("std"):
                 name += "_"+var.split("_")[-1]
             name_map.update({var:name})
 
-        df = self._l1b.to_pandas().rename(columns=name_map)
+        df = self._l1b.drop_vars(dropvar).to_pandas().rename(columns=name_map)
         df = df.reset_index()
         # Create a date‑only column
         df.insert(0,"date", df["time"].dt.date)
