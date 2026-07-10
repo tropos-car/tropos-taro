@@ -424,7 +424,7 @@ class BSRN:
         # load and merge rest of the files
         for fn in self.fnames[1:]:
             l1b_tmp =  xr.open_dataset(fn)
-            l1b_tmp = l1b_tmp.drop_vars(drop_vars)
+            l1b_tmp = l1b_tmp.drop_vars(drop_vars,errors='ignore')
 
             timestr = f"{pd.to_datetime(l1b_tmp.time.values[0]):%Y-%m-%dT%H:%M}" 
             attrs_new = {
@@ -902,7 +902,7 @@ class BSRN:
                 name += "_"+var.split("_")[-1]
             name_map.update({var:name})
 
-        df = self._l1b.drop_vars(dropvar).to_pandas().rename(columns=name_map)
+        df = self._l1b.drop_vars(dropvar,errors='ignore').to_pandas().rename(columns=name_map)
         df = df.reset_index()
         # Create a date‑only column
         df.insert(0,"date", df["time"].dt.date)
