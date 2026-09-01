@@ -427,6 +427,8 @@ class TAROQuicklooks:
             ax = plt.gca()
 
         lwd = self._filter_device(standard_names=[SNAMES.lwd], ids=ids)
+        if len(lwd)==0:
+            return None
         lwd = lwd.to_array(dim='new').mean("new", skipna=True)
 
         tair = self._filter_device(standard_names=[SNAMES.tair], ids=ids)
